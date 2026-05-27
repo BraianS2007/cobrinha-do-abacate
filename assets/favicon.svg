@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+<radialGradient id="a" cx="35%" cy="25%">
+<stop offset="0" stop-color="#dcfce7"/>
+<stop offset=".48" stop-color="#84cc16"/>
+<stop offset="1" stop-color="#14532d"/>
+</radialGradient>
+<filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-opacity=".35"/></filter>
+</defs>
+<rect width="128" height="128" rx="30" fill="#052e16"/>
+<path d="M18 78 C34 28,88 20,106 64 C122 106,57 128,28 99 C17 88,13 90,18 78Z" fill="url(#a)" filter="url(#s)"/>
+<ellipse cx="64" cy="73" rx="18" ry="21" fill="#7c2d12"/>
+<circle cx="48" cy="43" r="10" fill="#fef9c3" opacity=".7"/>
+<path d="M23 33 C40 16,74 11,94 29" fill="none" stroke="#bbf7d0" stroke-width="11" stroke-linecap="round"/>
+<circle cx="96" cy="31" r="7" fill="#fef08a"/>
+</svg>

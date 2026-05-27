@@ -1,0 +1,26 @@
+const CACHE_NAME = "cobrinha-abacate-public-release-v1";
+const FILES = ["./","./index.html","./style.css","./data.js","./storage.js","./audio.js","./ui.js","./game.js","./manifest.json",
+  "./assets/avocado.svg",
+  "./assets/tree.svg",
+  "./assets/rock.svg",
+  "./assets/cactus.svg",
+  "./assets/crystal.svg",
+  "./assets/building.svg",
+  "./assets/lava.svg",
+  "./assets/pond.svg",
+  "./assets/post.svg",
+  "./assets/sounds/eat.wav",
+  "./assets/sounds/click.wav",
+  "./assets/sounds/power.wav",
+  "./assets/sounds/lose.wav",
+  "./assets/sounds/win.wav",
+  "./assets/sounds/boss.wav",
+  "./assets/sounds/music.wav"  "./preloader.js",
+  "./assets/favicon.svg",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
+  "./assets/banner.svg",
+  "./assets/banner.png",
+];
+self.addEventListener("install", e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(FILES))));
+self.addEventListener("fetch", e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));

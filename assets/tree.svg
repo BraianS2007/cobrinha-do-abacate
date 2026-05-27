@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+<defs><radialGradient id="leaf" cx="35%" cy="25%"><stop offset="0" stop-color="#86efac"/><stop offset=".5" stop-color="#22c55e"/><stop offset="1" stop-color="#14532d"/></radialGradient><filter id="sh"><feDropShadow dx="0" dy="6" stdDeviation="4" flood-opacity=".35"/></filter></defs>
+<ellipse cx="61" cy="103" rx="32" ry="11" fill="#000" opacity=".22"/>
+<rect x="52" y="61" width="17" height="39" rx="6" fill="#7c2d12"/>
+<circle cx="42" cy="55" r="26" fill="url(#leaf)" filter="url(#sh)"/>
+<circle cx="69" cy="50" r="31" fill="url(#leaf)" filter="url(#sh)"/>
+<circle cx="58" cy="28" r="28" fill="url(#leaf)" filter="url(#sh)"/>
+<circle cx="80" cy="69" r="23" fill="#15803d"/>
+<circle cx="32" cy="72" r="21" fill="#166534"/>
+</svg>

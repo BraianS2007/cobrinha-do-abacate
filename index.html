@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#14532d" />
+  <meta name="description" content="Coma abacates, desbloqueie skins, compre upgrades, derrote bosses e sobreviva no modo infinito." />
+  <meta name="application-name" content="Cobrinha do Abacate Ultimate" />
+  <meta property="og:title" content="Cobrinha do Abacate Ultimate" />
+  <meta property="og:description" content="Jogo da cobrinha com abacates, skins, upgrades, Boss Rush, modo infinito e desafios diários." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/banner.png" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="preload" href="assets/avocado.svg" as="image" />
+  <link rel="preload" href="assets/tree.svg" as="image" />
+
+  <title>Cobrinha do Abacate Ultimate</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="menu-aberto">
+  <div id="preloader" class="preloader">
+    <div class="preloader-card">
+      <div class="preloader-logo">🥑</div>
+      <b>Cobrinha do Abacate Ultimate</b>
+      <small>Carregando assets do jogo...</small>
+      <div class="preloader-bar"><span id="preloaderBar"></span></div>
+    </div>
+  </div>
+  <h1>🐍 Cobrinha do Abacate Ultimate 🥑</h1>
+
+  <div id="menu" class="tela">
+    <div class="floaters"><span>🥑</span><span>🐍</span><span>🌿</span><span>⭐</span></div>
+
+    <div class="menu-topo">
+      <div class="icone">🥑</div>
+      <div class="titulo">
+        <h2>Ultimate Edition</h2>
+        <p>Mapas realistas, skins melhores, upgrades, bosses e ranking</p>
+      </div>
+    </div>
+
+    <div class="subtitulo">
+      Escolha seu modo, equipe skins mais realistas, melhore seus poderes e enfrente bosses especiais.
+    </div>
+
+    <div class="hero-scene">
+      <div class="hero-snake">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="hero-avocado">🥑</div>
+      <div class="hero-spark s1">✨</div>
+      <div class="hero-spark s2">🌿</div>
+      <div class="hero-spark s3">⭐</div>
+    </div>
+
+    <div class="grid-cards">
+      <div class="card">
+        <div class="campo">
+          <p>Dificuldade</p>
+          <select id="dificuldade">
+            <option value="105">Fácil</option>
+            <option value="135" selected>Médio</option>
+            <option value="170">Difícil</option>
+          </select>
+        </div>
+        <div class="campo">
+          <p>Mapa livre</p>
+          <select id="mapa">
+            <option value="floresta">🌳 Floresta Realista</option>
+            <option value="gelo">❄️ Vale Congelado</option>
+            <option value="noite">🌙 Campo Noturno</option>
+            <option value="pantano">🐸 Pântano Verde</option>
+            <option value="cidade">🏙️ Cidade</option>
+            <option value="deserto">🏜️ Deserto</option>
+            <option value="vulcao">🌋 Vulcão</option>
+          </select>
+        </div>
+        <div class="campo">
+          <p>Qualidade gráfica</p>
+          <select id="graficos">
+            <option value="baixo">Baixo</option>
+            <option value="medio" selected>Médio</option>
+            <option value="alto">Alto</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <p>Skin Player 1</p>
+        <div id="skinsP1" class="skin-grid"></div>
+      </div>
+
+      <div class="card">
+        <p>Skin Player 2</p>
+        <div id="skinsP2" class="skin-grid"></div>
+      </div>
+    </div>
+
+    <div class="checks">
+      <label><input type="checkbox" id="obstaculos" checked> Obstáculos reais</label>
+      <label><input type="checkbox" id="somLigado" checked> Som ligado</label>
+    </div>
+
+    <div class="botoes-grid menu-clean">
+      <button onclick="UI.openPlayMenu()">🎮 Jogar</button>
+      <button onclick="UI.openStore()">🛒 Skins</button>
+      <button onclick="UI.openUpgradeStore()">⬆️ Upgrades</button>
+      <button onclick="UI.openRanking()">📊 Ranking</button>
+      <button onclick="UI.openProfile()">👤 Perfil</button>
+      <button onclick="UI.openDailyChallenge()">📅 Desafio diário</button>
+      <button onclick="UI.openMissions()">🎯 Missões</button>
+      <button onclick="UI.openSettings()">⚙️ Configurações</button>
+      <button onclick="UI.openHowToPlay()">📖 Como jogar</button>
+      <button onclick="UI.openCredits()">⭐ Créditos</button>
+    </div>
+
+    <div class="rodape-menu">
+      🪙 Moedas: <b id="moedasMenu">0</b>
+      &nbsp; | &nbsp; 🏆 Recorde: <b id="recorde">0</b>
+      &nbsp; | &nbsp; 🥑 Total: <b id="totalAbacatesMenu">0</b>
+    </div>
+    <div class="version-badge">Versão Public Release • pronta para postar</div>
+    <div id="menuToast" class="toast"></div>
+  </div>
+
+  <div id="modoJogo" class="tela">
+    <h2>🎮 Escolha seu modo</h2>
+    <p class="info">
+      Escolha como quer jogar agora.
+    </p>
+
+    <div class="modo-grid">
+      <button onclick="Game.start('single')">
+        <span>🎮</span>
+        Single Player
+        <small>Jogue sozinho e bata seu recorde.</small>
+      </button>
+
+      <button onclick="Game.start('multi')">
+        <span>👥</span>
+        Multiplayer
+        <small>Dois jogadores no mesmo teclado.</small>
+      </button>
+
+      <button onclick="Game.start('campanha')">
+        <span>🏆</span>
+        Campanha
+        <small>Avance pelas fases e derrote os bosses.</small>
+      </button>
+
+      <button onclick="UI.openLevelSelect()">
+        <span>🗺️</span>
+        Seleção de fases
+        <small>Jogue fases já liberadas.</small>
+      </button>
+
+      <button onclick="Game.start('infinito')">
+        <span>♾️</span>
+        Modo Infinito
+        <small>O jogo acelera com o tempo.</small>
+      </button>
+
+      <button onclick="Game.start('bossrush')">
+        <span>⚔️</span>
+        Boss Rush
+        <small>Derrote Tomatão, Pimentão e Abacatão.</small>
+      </button>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
+  </div>
+
+  <div id="recompensaDiaria" class="tela">
+    <h2>🎁 Recompensa diária</h2>
+    <p id="dailyRewardText" class="info">
+      Volte todos os dias para ganhar moedas.
+    </p>
+
+    <div class="resultado-card">
+      <div class="badge-vencedor">Bônus de login</div>
+      <div class="stats-grid">
+        <div class="stat">Sequência <b id="dailyStreak">0</b></div>
+        <div class="stat">Recompensa <b id="dailyCoins">0</b></div>
+      </div>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.claimDailyReward()">Resgatar</button>
+      <button onclick="UI.backToMenu()">Depois</button>
+    </div>
+  </div>
+
+  <div id="tutorial" class="tela">
+    <h2>🎓 Tutorial rápido</h2>
+    <p class="info">
+      🐍 Player 1: <b>W A S D</b><br>
+      🐍 Player 2: <b>Setas</b><br>
+      📱 Celular: deslize o dedo ou use os botões virtuais.<br><br>
+      🥑 Coma abacates para pontuar e ganhar moedas.<br>
+      🌟 Abacate dourado vale mais pontos e mais moedas.<br>
+      ⚡ Existem poderes: escudo, pimenta, ímã, tempo lento e moeda dupla.<br>
+      👑 Na campanha, avance por mapas e enfrente <b>Tomatão</b>, <b>Pimentão</b> e <b>Abacatão</b>.
+    </p>
+    <div class="acoes-overlay"><button onclick="UI.closeTutorial()">Entendi, bora!</button></div>
+  </div>
+
+
+  <div id="perfilJogador" class="tela">
+    <h2>👤 Perfil do Jogador</h2>
+    <p class="info">Seu progresso geral salvo neste navegador.</p>
+
+    <div class="profile-card">
+      <div class="profile-avatar">🐍</div>
+      <div>
+        <b>Braian Player</b>
+        <small>Cobrinha do Abacate Ultimate</small>
+      </div>
+    </div>
+
+    <div id="perfilStats" class="stats-grid"></div>
+
+    <div class="resultado-card">
+      <p class="info">
+        Skins liberadas: <b id="perfilSkins">0</b><br>
+        Upgrades comprados: <b id="perfilUpgrades">0</b><br>
+        Fases liberadas: <b id="perfilFases">0</b>
+      </p>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
+  </div>
+
+  <div id="desafioDiario" class="tela">
+    <h2>📅 Desafio Diário</h2>
+    <p id="dailyChallengeText" class="info"></p>
+
+    <div class="resultado-card">
+      <div class="badge-vencedor">Recompensa: 🪙 <b id="dailyChallengeReward">0</b></div>
+      <div class="progresso"><div id="dailyChallengeProgress"></div></div>
+      <p class="info" id="dailyChallengeStatus"></p>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="Game.startDailyChallenge()">Jogar desafio</button>
+      <button onclick="UI.claimDailyChallengeReward()">Resgatar</button>
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
+  </div>
+
+  <div id="ranking" class="tela">
+    <h2>📊 Ranking Local</h2>
+    <p class="info">Seus números ficam salvos neste navegador.</p>
+    <div id="rankingCards" class="stats-grid"></div>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="selecionarFase" class="tela">
+    <h2>🗺️ Seleção de Fases</h2>
+    <p class="info">Conclua fases da campanha para liberar as próximas.</p>
+    <div id="listaFases" class="level-grid"></div>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="loja" class="tela">
+    <h2>🛒 Loja Premium</h2>
+    <p class="info">Compre skins, veja efeitos e melhore sua cobra.</p>
+
+    <div class="shop-tabs">
+      <button onclick="UI.setShopTab('skins')" id="tabSkins">Skins</button>
+      <button onclick="UI.setShopTab('upgrades')" id="tabUpgrades">Upgrades</button>
+      <button onclick="UI.setShopTab('especiais')" id="tabEspeciais">Especiais</button>
+    </div>
+
+    <div class="resultado-card"><p>🪙 Suas moedas: <b id="moedasLoja">0</b></p></div>
+
+    <div id="shopSkinsPanel">
+      <div id="skinPreviewBox" class="skin-preview-box"></div>
+      <div id="lojaSkins" class="skin-grid"></div>
+    </div>
+
+    <div id="shopUpgradesPanel" style="display:none">
+      <div id="lojaUpgradesInline"></div>
+    </div>
+
+    <div id="shopSpecialPanel" style="display:none">
+      <div class="upgrade-card">
+        <span>🎁</span>
+        <div style="flex:1">
+          <b>Recompensa diária</b><br>
+          <small>Entre todos os dias para ganhar moedas extras.</small>
+        </div>
+        <button onclick="UI.checkDailyReward()">Ver</button>
+      </div>
+      <div class="upgrade-card">
+        <span>👑</span>
+        <div style="flex:1">
+          <b>Campanha</b><br>
+          <small>Derrote bosses para liberar fases e ganhar moedas.</small>
+        </div>
+        <button onclick="UI.openPlayMenu()">Jogar</button>
+      </div>
+    </div>
+
+    <div id="lojaToast" class="toast"></div>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="upgrades" class="tela">
+    <h2>⬆️ Loja de Upgrades</h2>
+    <p class="info">Melhore sua cobra permanentemente.</p>
+    <div class="resultado-card"><p>🪙 Suas moedas: <b id="moedasUpgrade">0</b></p></div>
+    <div id="listaUpgrades"></div>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="missoes" class="tela">
+    <h2>🎯 Missões</h2>
+    <p class="info">Complete missões para ganhar moedas extras.</p>
+    <div id="listaMissoes"></div>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="conquistas" class="tela">
+    <h2>🏅 Conquistas</h2>
+    <p class="info">Complete desafios para mostrar seu progresso.</p>
+    <div id="listaConquistas"></div>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="configuracoes" class="tela">
+    <h2>⚙️ Configurações</h2>
+    <p class="info">Ajuste o jogo e gerencie seu progresso salvo.</p>
+    <div class="config-lista">
+      <div class="config-item"><b>Som</b><p>Ligue ou desligue som e música.</p><button onclick="UI.toggleSoundSetting()">Alternar som</button></div>
+      <div class="config-item"><b>Mostrar tutorial</b><p>Exibe novamente a tela de tutorial rápido.</p><button onclick="UI.showTutorialAgain()">Mostrar tutorial</button></div>
+      <div class="config-item"><b>Resetar moedas</b><p>Zera apenas suas moedas.</p><button class="perigo" onclick="UI.resetCoins()">Resetar moedas</button></div>
+      <div class="config-item"><b>Resetar ranking</b><p>Zera ranking, vitórias e recordes.</p><button class="perigo" onclick="UI.resetRanking()">Resetar ranking</button></div>
+      <div class="config-item"><b>Resetar tudo</b><p>Zera moedas, upgrades, skins, conquistas e fases.</p><button class="perigo" onclick="UI.resetEverything()">Resetar tudo</button></div>
+    </div>
+    <div id="configToast" class="toast"></div>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="comoJogar" class="tela">
+    <h2>📖 Como Jogar</h2>
+    <p class="info">
+      🐍 Player 1 usa <b>W A S D</b><br>
+      🐍 Player 2 usa <b>setas</b><br>
+      📱 No celular, deslize o dedo ou use os botões.<br><br>
+      🥑 Abacate normal vale <b>1 ponto</b><br>
+      🌟 Abacate dourado vale <b>3 pontos</b><br>
+      🛡️ Escudo protege de 1 batida<br>
+      🌶️ Pimenta acelera o rival<br>
+      🧲 Ímã atrai abacates por alguns segundos<br>
+      ⏳ Tempo lento reduz a velocidade dos perigos<br>
+      💰 Moeda dupla dobra as moedas por alguns segundos<br><br>
+      ⏸️ Aperte <b>P</b> para pausar<br>
+      🖥️ Aperte <b>F</b> para tela cheia.
+    </p>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="creditos" class="tela">
+    <h2>⭐ Créditos</h2>
+    <p class="info">
+      Projeto criado por <b>Braian Sorato</b><br><br>
+      Cobrinha do Abacate Ultimate é um jogo HTML5 feito para navegador, com campanha, Boss Rush, modo infinito, skins, upgrades e desafios diários.<br><br>
+      Controles: WASD, setas, toque, deslizar e joystick virtual.
+    </p>
+    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+  </div>
+
+  <div id="levelIntro" class="tela level-intro">
+    <h2 id="levelIntroTitle">Preparando fase...</h2>
+    <p id="levelIntroInfo" class="info"></p>
+    <div class="resultado-card">
+      <div id="levelIntroBadge" class="badge-vencedor">Boa sorte!</div>
+    </div>
+  </div>
+
+  <div id="contador" class="tela">3</div>
+
+  <div id="pausa" class="tela">
+    <h2>⏸️ Pausado</h2>
+    <p class="info" id="somStatusPausa">Som ligado</p>
+    <div class="config-lista">
+      <div class="config-item">
+        <b>Áudio</b>
+        <p id="somStatusPausa">Som ligado</p>
+        <button onclick="UI.toggleSoundPause()">Som on/off</button>
+      </div>
+
+      <div class="config-item">
+        <b>Qualidade gráfica</b>
+        <p>Altere a qualidade para melhorar desempenho.</p>
+        <select id="graficosPausa" onchange="UI.changeGraphicsFromPause(this.value)">
+          <option value="baixo">Baixo</option>
+          <option value="medio">Médio</option>
+          <option value="alto">Alto</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="Game.togglePause()">Continuar</button>
+      <button onclick="Game.restart()">Reiniciar</button>
+      <button onclick="Game.backToMenu()">Voltar ao menu</button>
+    </div>
+  </div>
+
+  <div id="faseCompleta" class="tela">
+    <h2>✅ Fase concluída!</h2>
+    <p id="faseTexto" class="info"></p>
+    <div class="fase-linha">Próxima fase: <b id="proximaFaseTexto">---</b></div>
+    <div class="acoes-overlay">
+      <button onclick="Game.nextCampaignLevel()">➡️ Próxima fase</button>
+      <button onclick="Game.backToMenu()">🏠 Menu</button>
+    </div>
+  </div>
+
+  <div id="gameOver" class="tela">
+    <h2 id="gameOverTitulo">Game Over</h2>
+    <div class="resultado-card">
+      <div id="vencedorBadge" class="badge-vencedor">Resultado</div>
+      <p id="gameOverTexto" class="info"></p>
+      <div class="stats-grid">
+        <div class="stat">P1 <b id="finalP1">0</b></div>
+        <div class="stat">P2 <b id="finalP2">0</b></div>
+        <div class="stat">Total <b id="finalTotal">0</b></div>
+        <div class="stat">Recorde <b id="finalRecorde">0</b></div>
+      </div>
+    </div>
+    <div class="acoes-overlay">
+      <button onclick="Game.restart()">🔁 Tentar novamente</button>
+      <button onclick="Game.backToMenu()">🏠 Voltar ao menu</button>
+    </div>
+  </div>
+
+  <div id="vitoriaEpica" class="tela">
+    <h2>👑 Vitória Épica!</h2>
+    <p id="vitoriaTexto" class="info"></p>
+    <div class="resultado-card">
+      <div class="badge-vencedor">Você salvou o Reino dos Abacates!</div>
+      <div class="stats-grid">
+        <div class="stat">Pontos <b id="epicScore">0</b></div>
+        <div class="stat">Moedas <b id="epicCoins">0</b></div>
+        <div class="stat">Bosses <b id="epicBosses">0</b></div>
+        <div class="stat">Recorde <b id="epicRecord">0</b></div>
+      </div>
+    </div>
+    <div class="acoes-overlay">
+      <button onclick="Game.restart()">🔁 Jogar novamente</button>
+      <button onclick="Game.backToMenu()">🏠 Menu</button>
+    </div>
+  </div>
+
+  <canvas id="game" width="680" height="680"></canvas>
+
+  <div class="painel">
+    <span>🐍 P1: <b id="score1">0</b></span>
+    <span>🐍 P2: <b id="score2">0</b></span>
+    <span>🎯 Meta: <b id="meta">10</b></span>
+    <span>🛡️ P1: <b id="shield1">0</b></span>
+    <span>🛡️ P2: <b id="shield2">0</b></span>
+    <span>🗺️ Fase: <b id="faseHud">-</b></span>
+    <span>👑 Boss: <b id="bossHud">-</b></span>
+    <span>🪙: <b id="moedasHud">0</b></span>
+  </div>
+
+  <div class="mobile-controls">
+    <div class="empty"></div>
+    <button data-dir="up">⬆️</button>
+    <div class="empty"></div>
+    <button data-dir="left">⬅️</button>
+    <button data-dir="down">⬇️</button>
+    <button data-dir="right">➡️</button>
+  </div>
+
+  <div id="joystick" class="joystick" aria-label="Joystick virtual">
+    <div id="joystickKnob" class="joystick-knob"></div>
+  </div>
+
+  <script src="preloader.js"></script>
+  <script src="data.js"></script>
+  <script src="storage.js"></script>
+  <script src="audio.js"></script>
+  <script src="ui.js"></script>
+  <script src="game.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+    }
+  </script>
+</body>
+</html>
