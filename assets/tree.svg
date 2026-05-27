@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
-<defs><radialGradient id="leaf" cx="35%" cy="25%"><stop offset="0" stop-color="#86efac"/><stop offset=".5" stop-color="#22c55e"/><stop offset="1" stop-color="#14532d"/></radialGradient><filter id="sh"><feDropShadow dx="0" dy="6" stdDeviation="4" flood-opacity=".35"/></filter></defs>
-<ellipse cx="61" cy="103" rx="32" ry="11" fill="#000" opacity=".22"/>
-<rect x="52" y="61" width="17" height="39" rx="6" fill="#7c2d12"/>
-<circle cx="42" cy="55" r="26" fill="url(#leaf)" filter="url(#sh)"/>
-<circle cx="69" cy="50" r="31" fill="url(#leaf)" filter="url(#sh)"/>
-<circle cx="58" cy="28" r="28" fill="url(#leaf)" filter="url(#sh)"/>
-<circle cx="80" cy="69" r="23" fill="#15803d"/>
-<circle cx="32" cy="72" r="21" fill="#166534"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><defs><radialGradient id="l1" cx="35%" cy="30%"><stop offset="0" stop-color="#b7f7a4"/><stop offset=".55" stop-color="#2db150"/><stop offset="1" stop-color="#114c22"/></radialGradient><filter id="s"><feDropShadow dx="0" dy="6" stdDeviation="5" flood-opacity=".35"/></filter></defs><ellipse cx="60" cy="102" rx="33" ry="10" fill="#000" opacity=".18"/><rect x="51" y="57" width="18" height="40" rx="7" fill="#70401f"/><path d="M58 52 C50 42 52 28 61 22 C66 29 67 42 58 52Z" fill="#8b5a2b" opacity=".55"/><circle cx="39" cy="56" r="25" fill="url(#l1)" filter="url(#s)"/><circle cx="73" cy="51" r="30" fill="url(#l1)" filter="url(#s)"/><circle cx="58" cy="29" r="28" fill="url(#l1)" filter="url(#s)"/><circle cx="84" cy="71" r="21" fill="#20753f"/><circle cx="28" cy="73" r="18" fill="#16522a"/></svg>

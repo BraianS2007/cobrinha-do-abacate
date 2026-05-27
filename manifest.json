@@ -1,13 +1,13 @@
 {
-  "name": "Cobrinha do Abacate Ultimate",
-  "short_name": "Abacate Ultimate",
+  "name": "Cobrinha do Abacate Ultimate 1.4.0",
+  "short_name": "Abacate 1.4",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#052e16",
   "theme_color": "#166534",
-  "description": "Jogo da cobrinha com abacates, skins, upgrades, Boss Rush, modo infinito e desafios diários.",
+  "description": "Polimento final com tela inicial cinematográfica, novos power-ups, itens especiais, bosses inteligentes, Game Over melhorado e dificuldade Insano.",
   "icons": [
     {
       "src": "assets/icon-192.png",

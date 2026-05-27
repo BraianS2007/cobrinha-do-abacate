@@ -1,6 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="110" height="84" viewBox="0 0 110 84">
-<defs><radialGradient id="l"><stop offset="0" stop-color="#fde68a"/><stop offset=".45" stop-color="#f97316"/><stop offset="1" stop-color="#7f1d1d"/></radialGradient></defs>
-<ellipse cx="55" cy="65" rx="40" ry="12" fill="#000" opacity=".25"/>
-<path d="M16 54 L28 25 L51 11 L77 21 L95 54 L78 73 L35 72 Z" fill="#3f1f1f"/>
-<path d="M31 51 C43 35,49 67,58 42 C65 24,72 53,81 36 C84 48,81 61,69 66 C53 74,36 68,31 51 Z" fill="url(#l)"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="110" height="84" viewBox="0 0 110 84"><defs><radialGradient id="l"><stop offset="0" stop-color="#fde68a"/><stop offset=".42" stop-color="#fb923c"/><stop offset="1" stop-color="#7f1d1d"/></radialGradient></defs><ellipse cx="55" cy="67" rx="39" ry="11" fill="#000" opacity=".2"/><path d="M16 54 L28 25 L51 11 L77 21 L95 54 L78 73 L35 72 Z" fill="#331717"/><path d="M32 52 C43 34,49 69,59 41 C66 24,73 56,82 36 C84 48,81 61,69 66 C54 74,36 69,32 52 Z" fill="url(#l)"/></svg>

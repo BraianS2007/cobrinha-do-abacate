@@ -15,6 +15,14 @@ const Sound = (() => {
   const pool = {};
 
   function isOn(){ return Store.saveData().sound !== false; }
+  function effectVolume(){
+    const save = Store.saveData();
+    return Math.max(0, Math.min(1, Number(save.effectVolume ?? 80) / 100));
+  }
+  function musicVolume(){
+    const save = Store.saveData();
+    return Math.max(0, Math.min(1, Number(save.musicVolume ?? 55) / 100));
+  }
 
   function playFile(name, volume=.65){
     if(!isOn()) return false;
@@ -26,7 +34,7 @@ const Sound = (() => {
         pool[name].push(audio);
       }
       audio.currentTime = 0;
-      audio.volume = volume;
+      audio.volume = Math.max(0, Math.min(1, volume * effectVolume()));
       const p = audio.play();
       if(p && p.catch) p.catch(()=>{});
       return true;
@@ -44,7 +52,7 @@ const Sound = (() => {
     const g = a.createGain();
     o.type = tipo;
     o.frequency.setValueAtTime(freq, a.currentTime);
-    g.gain.setValueAtTime(vol, a.currentTime);
+    g.gain.setValueAtTime(vol * effectVolume(), a.currentTime);
     g.gain.exponentialRampToValueAtTime(.01, a.currentTime + dur);
     o.connect(g);
     g.connect(a.destination);
@@ -65,7 +73,7 @@ const Sound = (() => {
     try{
       musicAudio = new Audio(files.music);
       musicAudio.loop = true;
-      musicAudio.volume = .22;
+      musicAudio.volume = .38 * musicVolume();
       const p = musicAudio.play();
       if(p && p.catch) p.catch(()=>fallbackMusic());
     }catch{
@@ -75,7 +83,7 @@ const Sound = (() => {
 
   function fallbackMusic(){
     let notes=[262,330,392,330],i=0;
-    musicTimer=setInterval(()=>{ tone(notes[i%notes.length],.09,"sine",.035); i++; },750);
+    musicTimer=setInterval(()=>{ tone(notes[i%notes.length],.09,"sine",.035 * musicVolume()); i++; },750);
   }
 
   function stopMusic(){
@@ -88,5 +96,5 @@ const Sound = (() => {
     }
   }
 
-  return {tone,click,eat,power,lose,win,boss,music,stopMusic};
+  return {tone,click,eat,power,lose,win,boss,music,stopMusic,effectVolume,musicVolume};
 })();

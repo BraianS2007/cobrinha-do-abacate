@@ -30,10 +30,10 @@ const Game = (() => {
     lastTime:0, animTime:0,
     campaignIndex:0, campaignTotal:0,
     map:"floresta", obstaclesReal:true, graphics:"medio",
-    snakes:[], food:null, powerUp:null, boss:null, bossProjectiles:[],
+    snakes:[], food:null, powerUp:null, boss:null, bossProjectiles:[], bossHazards:[],
     powerTimer:0, decor:[], particles:[], waves:[], floatingTexts:[], confetti:[],
-    match:{golden:0,totalPoints:0,coinsEarned:0,died:false},
-    effects:{magnet:0,slow:0,doubleCoins:0},
+    match:{golden:0,totalPoints:0,coinsEarned:0,died:false,powerUps:0,maxLength:120,deathReason:'-',startTime:0},
+    effects:{magnet:0,slow:0,doubleCoins:0,freeze:0,ghost:0,mini:0},
     cameraShake:0
   };
 
@@ -104,7 +104,7 @@ const Game = (() => {
 
 
   function start(mode){
-    Sound.click(); state.mode=mode; state.levelSelectMode=false; state.match={golden:0,totalPoints:0,coinsEarned:0,died:false}; state.effects={magnet:0,slow:0,doubleCoins:0};
+    Sound.click(); state.mode=mode; state.levelSelectMode=false; state.match={golden:0,totalPoints:0,coinsEarned:0,died:false,powerUps:0,maxLength:120,deathReason:'-',startTime:performance.now()}; state.effects={magnet:0,slow:0,doubleCoins:0,freeze:0,ghost:0,mini:0};
     if(mode === "campanha"){ state.campaignIndex=0; state.campaignTotal=0; }
     if(mode === "bossrush"){ state.bossRushIndex=0; state.campaignTotal=0; state.map="cidade"; }
     if(mode === "infinito"){ state.campaignTotal=0; }
@@ -114,7 +114,7 @@ const Game = (() => {
   function startLevel(index){
     const save = Store.saveData();
     if(!save.unlockedLevels.includes(index)){ UI.toast("Essa fase ainda está bloqueada."); return; }
-    Sound.click(); state.mode="campanha"; state.levelSelectMode=true; state.selectedLevelIndex=index; state.campaignIndex=index; state.campaignTotal=0; state.match={golden:0,totalPoints:0,coinsEarned:0,died:false}; state.effects={magnet:0,slow:0,doubleCoins:0};
+    Sound.click(); state.mode="campanha"; state.levelSelectMode=true; state.selectedLevelIndex=index; state.campaignIndex=index; state.campaignTotal=0; state.match={golden:0,totalPoints:0,coinsEarned:0,died:false,powerUps:0,maxLength:120,deathReason:'-',startTime:performance.now()}; state.effects={magnet:0,slow:0,doubleCoins:0,freeze:0,ghost:0,mini:0};
     setupGame(); showLevelIntro();
   }
 
@@ -126,7 +126,7 @@ const Game = (() => {
     save.graphics = state.graphics;
     Store.persist();
 
-    state.boss = null; state.bossProjectiles = []; state.closing=false; state.finished=false;
+    state.boss = null; state.bossProjectiles = []; state.bossHazards=[]; state.closing=false; state.finished=false;
 
     if(state.mode === "campanha"){
       const level=DATA.campaign[state.campaignIndex]; state.map=level.mapa; if(level.boss) state.boss=createBoss(level.boss);
@@ -134,27 +134,63 @@ const Game = (() => {
       const rush = bossRushData()[state.bossRushIndex];
       state.map = rush.map;
       state.boss = createBoss(rush.type);
+    } else if(state.mode === "treino" || state.mode === "tutorialmap"){
+      state.map = "floresta";
     } else {
       state.map=document.getElementById("mapa").value;
     }
 
     hideOverlays(); state.snakes=[];
-    const baseSpeed = Number(document.getElementById("dificuldade").value); const levelBonus = state.mode === "campanha" ? DATA.campaign[state.campaignIndex].speedBonus : 0;
+    const baseSpeed = (state.mode === "treino" || state.mode === "tutorialmap") ? 105 : Number(document.getElementById("dificuldade").value); const levelBonus = state.mode === "campanha" ? DATA.campaign[state.campaignIndex].speedBonus : 0;
 
     state.snakes.push(createSnake({x:W*.45,y:H*.55,angle:0,skin:save.selectedP1,controls:"wasd",speed:baseSpeed+levelBonus,isP1:true}));
     if(state.mode === "multi") state.snakes.push(createSnake({x:W*.55,y:H*.45,angle:Math.PI,skin:save.selectedP2,controls:"arrows",speed:baseSpeed,isP1:false}));
 
     const decorCountBase = state.mode === "campanha" ? DATA.campaign[state.campaignIndex].decoracoes : 34;
     const decorCount = state.graphics === "alto" ? decorCountBase + 12 : state.graphics === "baixo" ? Math.max(18, decorCountBase-10) : decorCountBase;
-    createDecor(decorCount); createFood(); state.powerUp=null; state.powerTimer=0; state.sessionSeconds=0; state.particles=[]; state.waves=[]; state.floatingTexts=[]; state.confetti=[]; state.animTime=0; state.lastTime=performance.now(); state.running=false; state.paused=false; state.cameraShake=0;
+    createDecor(decorCount); applySpecialItemBoosts(); createFood(); state.powerUp=null; state.powerTimer=0; state.sessionSeconds=0; state.match.startTime=performance.now(); state.match.maxLength=120; state.particles=[]; state.waves=[]; state.floatingTexts=[]; state.confetti=[]; state.animTime=0; state.lastTime=performance.now(); state.running=false; state.paused=false; state.cameraShake=0;
     updateHUD(); drawAll();
   }
 
-  function hideOverlays(){ ["menu","gameOver","pausa","comoJogar","creditos","contador","faseCompleta","loja","upgrades","conquistas","missoes","configuracoes","ranking","selecionarFase","tutorial","vitoriaEpica","modoJogo","recompensaDiaria","levelIntro"].forEach(id=>document.getElementById(id).style.display="none"); }
+
+  function applySpecialItemBoosts(){
+    const items = UI.consumeActiveItems ? UI.consumeActiveItems() : {};
+    const p1 = state.snakes[0];
+
+    if(!p1) return;
+
+    if(items.escudoInicial){
+      p1.shield = Math.max(p1.shield || 0, 1);
+      state.floatingTexts.push({x:p1.x,y:p1.y-24,texto:"ITEM: ESCUDO",cor:"#fef08a",life:80,vy:-1});
+    }
+
+    if(items.imaInicial){
+      state.effects.magnet = Math.max(state.effects.magnet || 0, 6500);
+      state.floatingTexts.push({x:p1.x,y:p1.y-24,texto:"ITEM: ÍMÃ",cor:"#93c5fd",life:80,vy:-1});
+    }
+
+    if(items.moedasDobro){
+      state.effects.doubleCoins = Math.max(state.effects.doubleCoins || 0, 12000);
+      state.floatingTexts.push({x:p1.x,y:p1.y-24,texto:"ITEM: MOEDAS 2X",cor:"#facc15",life:80,vy:-1});
+    }
+
+    if(items.revive){
+      p1.extraLives = Number(p1.extraLives || 0) + 1;
+      state.floatingTexts.push({x:p1.x,y:p1.y-24,texto:"ITEM: REVIVER",cor:"#fca5a5",life:80,vy:-1});
+    }
+
+    if(items.limpaMapa){
+      state.decor = state.decor.filter((_,i)=>i%2===0);
+      state.floatingTexts.push({x:W/2,y:80,texto:"ITEM: MAPA LIMPO",cor:"#bbf7d0",life:80,vy:-1});
+    }
+  }
+
+
+  function hideOverlays(){ ["menu","gameOver","pausa","comoJogar","creditos","contador","faseCompleta","loja","upgrades","conquistas","missoes","configuracoes","ranking","selecionarFase","tutorial","vitoriaEpica","modoJogo","recompensaDiaria","levelIntro","perfilJogador","desafioDiario","novidadesVersao","reportarBug","personagem","missaoSemanal","codigos"].forEach(id=>document.getElementById(id).style.display="none"); }
 
   function createSnake(config){
     const skin = DATA.skins[config.skin] || DATA.skins.verde; const save=Store.saveData();
-    const snake = {x:config.x,y:config.y,angle:config.angle,targetAngle:config.angle,controls:config.controls,baseSpeed:config.speed,score:0,alive:true,shield:save.upgrades.startShield>0?1:0,turbo:0,eatAnim:0,length:120,trail:[],cor1:skin.cor1,cor2:skin.cor2,brilho:skin.brilho,skinKey:config.skin,isP1:config.isP1,extraLifeUsed:0,extraLives:save.upgrades.extraLife||0};
+    const snake = {x:config.x,y:config.y,prevX:config.x,prevY:config.y,angle:config.angle,targetAngle:config.angle,controls:config.controls,baseSpeed:config.speed,score:0,alive:true,shield:(save.upgrades&&save.upgrades.startShield>0)?1:0,turbo:0,eatAnim:0,length:120,trail:[],cor1:skin.cor1,cor2:skin.cor2,brilho:skin.brilho,skinKey:config.skin,isP1:config.isP1,extraLifeUsed:0,extraLives:(save.upgrades&&save.upgrades.extraLife)||0,headRadius:16,bodyRadius:13};
     for(let i=0;i<36;i++) snake.trail.push({x:snake.x-Math.cos(snake.angle)*i*5,y:snake.y-Math.sin(snake.angle)*i*5});
     return snake;
   }
@@ -179,6 +215,18 @@ const Game = (() => {
     let name = "Modo Livre";
     let meta = "Coma o máximo de abacates que conseguir.";
     let tip = "Desvie dos obstáculos e use poderes.";
+
+    if(state.mode === "treino"){
+      name = "🎯 Modo Treino";
+      meta = "Treine sem morrer e aprenda o controle.";
+      tip = "Neste modo, colisões não encerram a partida.";
+    }
+
+    if(state.mode === "tutorialmap"){
+      name = "🎓 Tutorial Jogável";
+      meta = "Coma abacates, teste power-ups e bata em obstáculos sem perder.";
+      tip = "Use WASD ou joystick. O objetivo é aprender os comandos dentro do mapa.";
+    }
 
     if(state.mode === "infinito"){
       name = "♾️ Modo Infinito";
@@ -213,27 +261,14 @@ const Game = (() => {
 
     title.textContent = name;
     info.innerHTML = `${meta}<br><br>${tip}`;
-    badge.textContent = state.mode === "campanha" ? "Campanha" : state.mode === "multi" ? "Duelo" : "Boa sorte!";
+    badge.textContent = state.mode === "campanha" ? "Campanha" :
+      state.mode === "multi" ? "Duelo" :
+      state.mode === "treino" ? "Sem morte" :
+      state.mode === "tutorialmap" ? "Aprendizado" :
+      "Boa sorte!";
 
     intro.style.display = "block";
-  
-  function startDailyChallenge(){
-    const ch = UI.currentDailyChallenge();
-
-    if(ch.type === "boss"){
-      start("bossrush");
-      return;
-    }
-
-    if(ch.type === "infinite"){
-      start("infinito");
-      return;
-    }
-
-    start("single");
-  }
-
-  UI.setBody("menu-aberto");
+    UI.setBody("menu-aberto");
 
     setTimeout(()=>{
       intro.style.display = "none";
@@ -278,7 +313,7 @@ const Game = (() => {
     const dt=Math.min((time-state.lastTime)/1000,.05); state.lastTime=time; state.animTime += dt*1000;
     state.sessionSeconds += dt;
     updateControls(); updateEffectTimers(dt);
-    if(!state.closing){ updateSnakes(dt); updateBoss(dt); updateBossProjectiles(dt); updatePowerUps(dt); }
+    if(!state.closing){ updateSnakes(dt); updateBoss(dt); updateBossProjectiles(dt); updateBossHazards(dt); updatePowerUps(dt); }
     updateEffects(); drawAll(); requestAnimationFrame(loop);
   }
 
@@ -286,6 +321,9 @@ const Game = (() => {
     if(state.effects.magnet>0) state.effects.magnet=Math.max(0,state.effects.magnet-dt*1000);
     if(state.effects.slow>0) state.effects.slow=Math.max(0,state.effects.slow-dt*1000);
     if(state.effects.doubleCoins>0) state.effects.doubleCoins=Math.max(0,state.effects.doubleCoins-dt*1000);
+    if(state.effects.freeze>0) state.effects.freeze=Math.max(0,state.effects.freeze-dt*1000);
+    if(state.effects.ghost>0) state.effects.ghost=Math.max(0,state.effects.ghost-dt*1000);
+    if(state.effects.mini>0) state.effects.mini=Math.max(0,state.effects.mini-dt*1000);
     state.cameraShake=Math.max(0,state.cameraShake-dt*1000);
   }
 
@@ -296,21 +334,54 @@ const Game = (() => {
 
   function updateSnakes(dt){
     state.snakes.forEach(s=>{
-      if(!s.alive) return; turnSmooth(s,dt);
+      if(!s.alive) return;
+      turnSmooth(s,dt);
+
       let velocity = s.baseSpeed + (s.turbo>0 ? 60 : 0);
-      if(state.mode === "infinito") velocity += Math.min(90, state.animTime / 900); 
+      if(state.mode === "infinito") velocity += Math.min(90, state.animTime / 900);
       if(state.boss && state.boss.slipperyTimer > 0) velocity *= 1.08;
       if(state.map === "pantano" && isNearType(s.x,s.y,"lago",42)) velocity *= 0.62;
       if(state.map === "cidade") velocity *= 0.96;
       if(state.effects.slow>0) velocity *= 0.88;
-      s.x += Math.cos(s.angle)*velocity*dt; 
-      s.y += Math.sin(s.angle)*velocity*dt;
-      if(state.map === "deserto"){
-        s.x += Math.sin(state.animTime/600) * 18 * dt;
-      } s.trail.unshift({x:s.x,y:s.y}); trimTrail(s); spawnSkinParticles(s);
-      if(s.eatAnim>0) s.eatAnim=Math.max(0,s.eatAnim-dt*1000); if(s.turbo>0) s.turbo=Math.max(0,s.turbo-dt*1000);
-      if(state.effects.magnet>0 && state.food){ const ang=Math.atan2(s.y-state.food.y,s.x-state.food.x); state.food.x += Math.cos(ang)*40*dt; state.food.y += Math.sin(ang)*40*dt; }
-      checkCollisions(s); checkFood(s); checkPowerUp(s); checkBossHit(s);
+      if(state.effects.ghost>0) velocity *= 1.10;
+
+      const steps = Math.max(1, Math.ceil((velocity * dt) / 5.5));
+      const stepDt = dt / steps;
+
+      for(let step=0; step<steps; step++){
+        if(!s.alive || state.closing) break;
+
+        s.prevX = s.x;
+        s.prevY = s.y;
+
+        s.x += Math.cos(s.angle) * velocity * stepDt;
+        s.y += Math.sin(s.angle) * velocity * stepDt;
+
+        if(state.map === "deserto"){
+          s.x += Math.sin(state.animTime/600) * 18 * stepDt;
+        }
+
+        s.trail.unshift({x:s.x,y:s.y});
+        trimTrail(s);
+
+        if(checkCollisions(s)) break;
+        checkFood(s);
+        checkPowerUp(s);
+        checkBossHit(s);
+      }
+
+      spawnSkinParticles(s);
+
+      if(s.eatAnim>0) s.eatAnim=Math.max(0,s.eatAnim-dt*1000);
+      if(s.turbo>0) s.turbo=Math.max(0,s.turbo-dt*1000);
+      s.headRadius = state.effects.mini>0 ? 10 : 16;
+      s.bodyRadius = state.effects.mini>0 ? 8 : 13;
+
+      if(state.effects.magnet>0 && state.food){
+        const ang=Math.atan2(s.y-state.food.y,s.x-state.food.x);
+        state.food.x += Math.cos(ang)*40*dt;
+        state.food.y += Math.sin(ang)*40*dt;
+      }
     });
     updateHUD();
   }
@@ -334,57 +405,281 @@ const Game = (() => {
   }
 
   function checkCollisions(s){
-    if(!state.running || state.closing) return;
-    if(s.x<14||s.y<14||s.x>W-14||s.y>H-14){ dieOrShield(s); return; }
-    if(state.obstaclesReal){ for(const d of state.decor){ if(d.block && dist({x:s.x,y:s.y}, d) < d.hit){ dieOrShield(s); return; } } }
-    for(const other of state.snakes){ const points=sampleSnake(other,12); for(let i=10;i<points.length;i++){ if(other===s && i<13) continue; if(dist({x:s.x,y:s.y}, points[i])<14){ dieOrShield(s); return; } } }
-    if(state.snakes.length>1){ const other=state.snakes.find(o=>o!==s); if(other&&other.alive&&dist({x:s.x,y:s.y},{x:other.x,y:other.y})<16){ dieOrShield(s); dieOrShield(other); } }
+    if(!state.running || state.closing) return false;
+
+    const moveA = {x:s.prevX ?? s.x, y:s.prevY ?? s.y};
+    const moveB = {x:s.x, y:s.y};
+    const hitRadius = s.headRadius || 16;
+
+    if(s.x < hitRadius || s.y < hitRadius || s.x > W-hitRadius || s.y > H-hitRadius){
+      dieOrShield(s,'Borda do mapa');
+      return true;
+    }
+
+    if(state.obstaclesReal && state.effects.ghost<=0){
+      for(const d of state.decor){
+        if(d.block && pointToSegmentDistance(d, moveA, moveB) < d.hit + hitRadius - 4){
+          dieOrShield(s,'Obstáculo');
+          return true;
+        }
+      }
+    }
+
+    if(state.effects.ghost<=0){
+      for(const hz of state.bossHazards || []){
+        if(pointToSegmentDistance(hz, moveA, moveB) < hz.r + hitRadius - 4){
+          dieOrShield(s,hz.label || 'Área perigosa');
+          return true;
+        }
+      }
+    }
+
+    if(state.effects.ghost<=0) for(const other of state.snakes){
+      if(!other.alive) continue;
+      if(snakeHitsBody(moveA, moveB, s, other)){
+        dieOrShield(s,'Corpo da cobra');
+        return true;
+      }
+    }
+
+    if(state.snakes.length > 1){
+      const other = state.snakes.find(o=>o!==s && o.alive);
+      if(other && dist({x:s.x,y:s.y},{x:other.x,y:other.y}) < (hitRadius + (other.headRadius||16) - 4)){
+        dieOrShield(s);
+        dieOrShield(other);
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  function dieOrShield(s){
+  function snakeHitsBody(moveA, moveB, snake, other){
+    const pts = sampleSnake(other, 6);
+    if(pts.length < 3) return false;
+
+    let bodyDistanceFromHead = 0;
+
+    for(let i=1;i<pts.length;i++){
+      const segA = pts[i-1];
+      const segB = pts[i];
+      bodyDistanceFromHead += dist(segA, segB);
+
+      // Ignora uma distância segura atrás da cabeça para não morrer instantaneamente ao virar.
+      if(other === snake && bodyDistanceFromHead < 58) continue;
+
+      const gap = segmentToSegmentDistance(moveA, moveB, segA, segB);
+      const radius = (snake.headRadius || 16) + (other.bodyRadius || 13) - 7;
+
+      if(gap < radius) return true;
+    }
+
+    return false;
+  }
+
+  function pointToSegmentDistance(p, a, b){
+    const abx = b.x-a.x;
+    const aby = b.y-a.y;
+    const lenSq = abx*abx + aby*aby || 1;
+
+    let t = ((p.x-a.x)*abx + (p.y-a.y)*aby) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+
+    const x = a.x + abx*t;
+    const y = a.y + aby*t;
+
+    return Math.hypot(p.x-x, p.y-y);
+  }
+
+  function segmentToSegmentDistance(a,b,c,d){
+    if(segmentsIntersect(a,b,c,d)) return 0;
+
+    return Math.min(
+      pointToSegmentDistance(a,c,d),
+      pointToSegmentDistance(b,c,d),
+      pointToSegmentDistance(c,a,b),
+      pointToSegmentDistance(d,a,b)
+    );
+  }
+
+  function segmentsIntersect(a,b,c,d){
+    const orient = (p,q,r) => (q.x-p.x)*(r.y-p.y) - (q.y-p.y)*(r.x-p.x);
+    const o1 = orient(a,b,c);
+    const o2 = orient(a,b,d);
+    const o3 = orient(c,d,a);
+    const o4 = orient(c,d,b);
+
+    return (o1*o2 < 0) && (o3*o4 < 0);
+  }
+
+  function dieOrShield(s,reason='Colisão'){
     if(!state.running || state.closing) return;
+
+    if(state.mode === "treino" || state.mode === "tutorialmap"){
+      state.match.deathReason = "Treino sem morte";
+      s.shield = 1;
+      s.x = W*.5;
+      s.y = H*.5;
+      s.prevX = s.x;
+      s.prevY = s.y;
+      s.trail = [];
+      for(let i=0;i<28;i++) s.trail.push({x:s.x-i*5,y:s.y});
+      state.floatingTexts.push({x:s.x,y:s.y-20,texto:"TREINO: SEM MORTE",cor:"#fef08a",life:70,vy:-1.1});
+      Sound.power();
+      return;
+    }
     if(s.shield>0){ s.shield=0; Sound.power(); createParticles(s.x,s.y,"#fef08a"); state.waves.push({x:s.x,y:s.y,r:8,life:28,cor:"rgba(254,240,138,.85)"}); s.x-=Math.cos(s.angle)*24; s.y-=Math.sin(s.angle)*24; return; }
     if(s.extraLives>0 && s.extraLifeUsed < s.extraLives){ s.extraLifeUsed++; s.shield=1; s.x=W*.5; s.y=H*.5; s.trail=[{x:s.x,y:s.y}]; for(let i=1;i<28;i++) s.trail.push({x:s.x-i*5,y:s.y}); state.floatingTexts.push({x:s.x,y:s.y-16,texto:"VIDA EXTRA!",cor:"#fca5a5",life:55,vy:-1.1}); Sound.power(); return; }
-    state.match.died=true; state.closing=true; s.alive=false; deathExplosion(s); Sound.lose(); setTimeout(()=>finish(false),700);
+    state.match.died=true; state.match.deathReason=reason; state.closing=true; s.alive=false; deathExplosion(s); Sound.lose(); setTimeout(()=>finish(false),700);
   }
 
   function deathExplosion(s){ const points=sampleSnake(s,12); points.forEach((p,i)=>{ for(let j=0;j<3;j++) state.particles.push({x:p.x,y:p.y,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,life:35+Math.random()*25,cor:i%2===0?s.cor1:s.cor2,size:2+Math.random()*2}); }); state.waves.push({x:s.x,y:s.y,r:12,life:42,cor:"rgba(239,68,68,.85)"}); state.floatingTexts.push({x:s.x,y:s.y-18,texto:"BOOM!",cor:"#fecaca",life:55,vy:-1.1}); }
 
-  function coinMultiplier(){ return 1 + (Store.saveData().upgrades.coinMult || 0) * .25; }
-  function goldenChance(){ return .13 + (Store.saveData().upgrades.goldenLuck || 0) * .04; }
-  function magnetDuration(){ return 4200 + (Store.saveData().upgrades.magnetTime || 0) * 1200; }
-  function slowDuration(){ return 3500 + (Store.saveData().upgrades.slowTime || 0) * 1200; }
+  function coinMultiplier(){ return 1 + upgradeLevel("coinMult") * .25; }
+  function goldenChance(){ return .13 + upgradeLevel("goldenLuck") * .04; }
+  function magnetDuration(){ return 4200 + upgradeLevel("magnetTime") * 1200; }
+  function slowDuration(){ return 3500 + upgradeLevel("slowTime") * 1200; }
+  function upgradeLevel(key){
+    const save = Store.saveData();
+    if(!save.upgrades) save.upgrades = {};
+    return Number(save.upgrades[key] || 0);
+  }
+
 
   function checkFood(s){
     if(!state.food || !state.running || state.closing) return;
     if(dist({x:s.x,y:s.y}, state.food) < 24){
-      const basePoints = state.food.gold ? 3 : 1; const save=Store.saveData(); const coinGain = Math.max(1, Math.round(basePoints * coinMultiplier() * (state.effects.doubleCoins>0?2:1)));
-      s.score += basePoints; s.length += state.food.gold ? 48 : 24; s.eatAnim=280; state.match.totalPoints += basePoints; save.moedas += coinGain; state.match.coinsEarned += coinGain; save.stats.totalAvocados += 1;
+      const basePoints = state.food.gold ? 3 : 1; const save=Store.saveData(); const doubleActive = state.effects.doubleCoins>0; const coinGain = Math.max(1, Math.round(basePoints * coinMultiplier() * (doubleActive?2:1)));
+      s.score += basePoints; s.length += state.food.gold ? 48 : 24; state.match.maxLength = Math.max(state.match.maxLength || 0, Math.round(s.length)); s.eatAnim=280; state.match.totalPoints += basePoints; save.moedas += coinGain; state.match.coinsEarned += coinGain; save.stats.totalAvocados += 1;
       UI.updateMission("abacates",1,true); 
       UI.updateMission("maxScore",s.score,false);
       UI.updateDailyChallenge("avocados",1,true);
       UI.updateDailyChallenge("score",s.score,true);
-      if(state.mode === "infinito") UI.updateDailyChallenge("infinite",s.score,true); if(state.match.totalPoints>=1) UI.unlockAchievement("primeiroAbacate"); if(s.score>=10) UI.unlockAchievement("dezPontos");
+      UI.updateWeeklyMission("avocados",1,false);
+      UI.updateWeeklyMission("score",basePoints,false);
+      UI.addXP(basePoints * 2, "Abacate");
+      if(state.mode === "infinito"){ UI.updateDailyChallenge("infinite",s.score,true); UI.updateWeeklyMission("infinite",s.score,true); } if(state.match.totalPoints>=1) UI.unlockAchievement("primeiroAbacate"); if(s.score>=10) UI.unlockAchievement("dezPontos");
       if(state.food.gold){ state.match.golden++; save.stats.totalGolden += 1; }
-      Store.persist(); if(state.mode === "campanha") state.campaignTotal += basePoints; Sound.eat(); eatEffect(state.food.x,state.food.y,state.food.gold,basePoints); createFood();
+      Store.persist(); if(state.mode === "campanha") state.campaignTotal += basePoints; Sound.eat(); eatEffect(state.food.x,state.food.y,state.food.gold,basePoints,coinGain,doubleActive); createFood();
+      if(state.mode === "tutorialmap"){
+        const hints = ["Boa! Agora tente pegar um power-up.", "Repare no HUD: escudo e moedas aparecem ali.", "Se bater, você volta para o centro porque é tutorial.", "Tutorial completo! Continue treinando ou volte ao menu."];
+        const h = hints[Math.min(s.score-1, hints.length-1)];
+        state.floatingTexts.push({x:W/2,y:70,texto:h,cor:"#fef08a",life:120,vy:-.35});
+      }
       if(state.mode === "multi" && s.score >= DATA.metaMulti){ finish(true); return; }
       if(state.mode === "campanha" && !state.boss){ const meta=DATA.campaign[state.campaignIndex].meta; if(s.score >= meta) completeLevel(); }
     }
   }
 
-  function checkPowerUp(s){ if(!state.powerUp||!state.running||state.closing) return; if(dist({x:s.x,y:s.y}, state.powerUp) < 22){ applyPower(s, state.powerUp.tipo); createParticles(state.powerUp.x,state.powerUp.y,"#fef08a"); state.waves.push({x:state.powerUp.x,y:state.powerUp.y,r:8,life:28,cor:"rgba(254,240,138,.8)"}); state.powerUp=null; Sound.power(); } }
+  function checkPowerUp(s){
+    if(!state.powerUp || !state.running || state.closing) return false;
+
+    const moveA = {x:s.prevX ?? s.x, y:s.prevY ?? s.y};
+    const moveB = {x:s.x, y:s.y};
+    const collectRadius = (s.headRadius || 16) + 14;
+
+    if(pointToSegmentDistance(state.powerUp, moveA, moveB) <= collectRadius){
+      const tipo = state.powerUp.tipo;
+      const px = state.powerUp.x;
+      const py = state.powerUp.y;
+
+      applyPower(s, tipo);
+
+      createParticles(px,py,"#fef08a");
+      state.waves.push({x:px,y:py,r:8,life:28,cor:"rgba(254,240,138,.8)"});
+      state.powerUp=null;
+      state.powerTimer=0;
+
+      Sound.power();
+      return true;
+    }
+
+    return false;
+  }
 
   function applyPower(s,tipo){
-    if(tipo==="escudo") s.shield=1;
-    if(tipo==="pimenta") state.snakes.forEach(o=>{ if(o!==s) o.turbo=2500; });
-    if(tipo==="magnet") state.effects.magnet = magnetDuration();
-    if(tipo==="slow") state.effects.slow = slowDuration();
-    if(tipo==="double") state.effects.doubleCoins = 4500;
-    state.floatingTexts.push({x:s.x,y:s.y-10,texto:tipo.toUpperCase(),cor:"#fde047",life:40,vy:-1});
+    state.match.powerUps = (state.match.powerUps || 0) + 1;
+    const powerNames = {
+      escudo:"ESCUDO ATIVO",
+      pimenta:"PIMENTA NO RIVAL",
+      magnet:"ÍMÃ ATIVO",
+      slow:"TEMPO LENTO",
+      double:"MOEDAS 2X",
+      freeze:"CONGELAR",
+      ghost:"FANTASMA",
+      mini:"MINI COBRA",
+      heart:"VIDA EXTRA",
+      mega:"MEGA ABACATE"
+    };
+
+    if(tipo==="escudo"){
+      s.shield = Math.max(s.shield || 0, 1);
+    }
+
+    if(tipo==="pimenta"){
+      state.snakes.forEach(o=>{ if(o!==s) o.turbo=3000; });
+      if(state.snakes.length === 1) s.turbo = 1200;
+    }
+
+    if(tipo==="magnet"){
+      state.effects.magnet = Math.max(state.effects.magnet || 0, magnetDuration());
+    }
+
+    if(tipo==="slow"){
+      state.effects.slow = Math.max(state.effects.slow || 0, slowDuration());
+    }
+
+    if(tipo==="double"){
+      // Antes era pouco visível; agora dura mais e aparece no texto dos ganhos.
+      state.effects.doubleCoins = Math.max(state.effects.doubleCoins || 0, 10000);
+    }
+
+    if(tipo==="freeze"){
+      state.effects.freeze = Math.max(state.effects.freeze || 0, 4200);
+    }
+
+    if(tipo==="ghost"){
+      state.effects.ghost = Math.max(state.effects.ghost || 0, 5200);
+    }
+
+    if(tipo==="mini"){
+      state.effects.mini = Math.max(state.effects.mini || 0, 6200);
+      s.length = Math.max(90, s.length - 70);
+    }
+
+    if(tipo==="heart"){
+      s.extraLives = Number(s.extraLives || 0) + 1;
+      s.shield = Math.max(s.shield || 0, 1);
+    }
+
+    if(tipo==="mega"){
+      const save = Store.saveData();
+      const points = 6;
+      const coins = Math.round(8 * coinMultiplier() * (state.effects.doubleCoins>0?2:1));
+      s.score += points;
+      s.length += 50;
+      state.match.totalPoints += points;
+      state.match.coinsEarned += coins;
+      state.match.maxLength = Math.max(state.match.maxLength || 0, Math.round(s.length));
+      save.moedas += coins;
+      Store.persist();
+      UI.addXP(20, "Mega Abacate");
+    }
+
+
+    state.floatingTexts.push({
+      x:s.x,
+      y:s.y-18,
+      texto:powerNames[tipo] || tipo.toUpperCase(),
+      cor: tipo==="double" ? "#facc15" : "#fde047",
+      life:70,
+      vy:-1.1
+    });
   }
 
   function updateBoss(dt){
     const boss=state.boss; if(!boss||!state.running||state.closing) return;
+    if(state.effects.freeze>0){ boss.angry=200; return; }
     boss.inv=Math.max(0,boss.inv-dt*1000); 
     boss.angry=Math.max(0,boss.angry-dt*1000); 
     boss.attackTimer -= dt*1000;
@@ -412,7 +707,10 @@ const Game = (() => {
     state.cameraShake = 450;
 
     if(boss.type === "tomate"){
-      state.floatingTexts.push({x:boss.x,y:boss.y-55,texto:"RAJADA!",cor:"#fecaca",life:55,vy:-1.1});
+      const dashA = Math.atan2(target.y-boss.y,target.x-boss.x);
+      boss.vx += Math.cos(dashA) * (boss.phase===3?160:105);
+      boss.vy += Math.sin(dashA) * (boss.phase===3?160:105);
+      state.floatingTexts.push({x:boss.x,y:boss.y-55,texto:"RAJADA + INVESTIDA!",cor:"#fecaca",life:55,vy:-1.1});
       for(let wave=0; wave<3; wave++){
         setTimeout(()=>{
           if(!state.boss) return;
@@ -433,8 +731,20 @@ const Game = (() => {
 
     if(boss.type === "pimenta"){
       boss.slipperyTimer = 3600;
-      state.floatingTexts.push({x:boss.x,y:boss.y-55,texto:"MAPA ESCORREGADIO!",cor:"#fed7aa",life:70,vy:-1.1});
+      state.floatingTexts.push({x:boss.x,y:boss.y-55,texto:"ZONA DE FOGO!",cor:"#fed7aa",life:70,vy:-1.1});
       state.waves.push({x:boss.x,y:boss.y,r:20,life:50,cor:"rgba(249,115,22,.85)"});
+      const total = boss.phase===3 ? 5 : 3;
+      for(let i=0;i<total;i++){
+        const a = (Math.PI*2/total)*i + state.animTime/700;
+        state.bossHazards.push({
+          x:boss.x + Math.cos(a)*90,
+          y:boss.y + Math.sin(a)*90,
+          r:26,
+          life:4200,
+          color:"rgba(249,115,22,.38)",
+          label:"Fogo do Pimentão"
+        });
+      }
     }
 
     if(boss.type === "abacate"){
@@ -452,6 +762,13 @@ const Game = (() => {
         });
       }
       state.waves.push({x:boss.x,y:boss.y,r:28,life:60,cor:"rgba(132,204,22,.75)"});
+      if(boss.phase >= 2){
+        for(let i=0;i<(boss.phase===3?3:2);i++){
+          let d={x:60+Math.random()*(W-120), y:60+Math.random()*(H-120), tipo:"pedra", block:true, hit:22};
+          if(safeArea(d.x,d.y) && !occupied(d.x,d.y)) state.decor.push(d);
+        }
+        state.floatingTexts.push({x:boss.x,y:boss.y-80,texto:"OBSTÁCULOS INVOCADOS!",cor:"#d9f99d",life:55,vy:-1});
+      }
     }
 
     Sound.boss();
@@ -464,7 +781,8 @@ const Game = (() => {
   }
 
   function updateBossProjectiles(dt){
-    state.bossProjectiles.forEach(pr=>{ pr.x += pr.vx*dt; pr.y += pr.vy*dt; pr.life -= dt*1000; state.snakes.forEach(s=>{ if(!s.alive||state.closing) return; if(dist({x:s.x,y:s.y}, pr) < pr.r+14){ pr.life=0; createParticles(pr.x,pr.y,pr.color); dieOrShield(s); } }); });
+    if(state.effects.freeze>0) return;
+    state.bossProjectiles.forEach(pr=>{ pr.x += pr.vx*dt; pr.y += pr.vy*dt; pr.life -= dt*1000; state.snakes.forEach(s=>{ if(!s.alive||state.closing||state.effects.ghost>0) return; if(dist({x:s.x,y:s.y}, pr) < pr.r+14){ pr.life=0; createParticles(pr.x,pr.y,pr.color); dieOrShield(s); } }); });
     state.bossProjectiles = state.bossProjectiles.filter(pr=>pr.life>0 && pr.x>-30 && pr.y>-30 && pr.x<W+30 && pr.y<H+30);
   }
 
@@ -478,6 +796,8 @@ const Game = (() => {
         UI.unlockAchievement("derrotouBoss"); 
         UI.updateMission("bossKills",1,true); 
         UI.updateDailyChallenge("boss",1,true);
+        UI.updateWeeklyMission("boss",1,false);
+        UI.addXP(50, "Boss derrotado");
         save.stats.bossKills += 1; 
         Store.persist(); 
         if(state.mode === "bossrush"){ nextBossRush(); }
@@ -487,9 +807,41 @@ const Game = (() => {
     }
   }
 
+
+  function updateBossHazards(dt){
+    if(state.effects.freeze>0) return;
+
+    state.bossHazards = (state.bossHazards || []).filter(hz=>{
+      hz.life -= dt*1000;
+      hz.pulse = (hz.pulse || 0) + dt*1000;
+
+      state.snakes.forEach(s=>{
+        if(!s.alive || state.closing || state.effects.ghost>0) return;
+        if(dist({x:s.x,y:s.y}, hz) < hz.r + (s.headRadius || 16) - 4){
+          dieOrShield(s, hz.label || "Área perigosa");
+          hz.life = Math.min(hz.life, 180);
+        }
+      });
+
+      return hz.life > 0;
+    });
+  }
+
+
   function updatePowerUps(dt){ 
     state.powerTimer += dt*1000; 
-    if(!state.powerUp && state.powerTimer > (state.mode === "infinito" ? 5200 : 6500)){ createPowerUp(); state.powerTimer=0; }
+    const dificuldade = Number(document.getElementById("dificuldade").value || 135);
+    let interval = state.mode === "infinito" ? 5200 : 6500;
+
+    if(dificuldade <= 105) interval = 4800;
+    if(dificuldade >= 170) interval = 7600;
+    if(dificuldade >= 205) interval = 9000;
+
+    if(!state.powerUp && state.powerTimer > interval){
+      createPowerUp();
+      state.powerTimer=0;
+    }
+
     if(state.mode === "infinito" && state.graphics !== "baixo" && Math.floor(state.animTime) % 9000 < 40 && state.decor.length < 70){
       const oldLen = state.decor.length;
       createExtraObstacle();
@@ -530,6 +882,7 @@ const Game = (() => {
     state.map = rush.map;
     state.boss = createBoss(rush.type);
     state.bossProjectiles = [];
+    state.bossHazards = [];
     createDecor(30);
     createFood();
 
@@ -545,36 +898,50 @@ const Game = (() => {
     Sound.win();
   }
 
+
+  function formatTime(seconds){
+    seconds = Math.max(0, Math.floor(seconds || 0));
+    const m = Math.floor(seconds/60);
+    const s = seconds%60;
+    return `${m}:${String(s).padStart(2,"0")}`;
+  }
+
+  function matchStatsHTML(){
+    const duration = Math.floor(state.sessionSeconds || ((performance.now() - (state.match.startTime || performance.now()))/1000));
+    return `
+      <div class="match-stat-item">⏱️ Tempo<b>${formatTime(duration)}</b></div>
+      <div class="match-stat-item">🪙 Moedas ganhas<b>${state.match.coinsEarned || 0}</b></div>
+      <div class="match-stat-item">⚡ Power-ups usados<b>${state.match.powerUps || 0}</b></div>
+      <div class="match-stat-item">🌟 Dourados<b>${state.match.golden || 0}</b></div>
+      <div class="match-stat-item">📏 Maior tamanho<b>${state.match.maxLength || 0}</b></div>
+      <div class="match-stat-item">💀 Motivo<b>${state.match.deathReason || "-"}</b></div>
+    `;
+  }
+
+  function renderMatchStats(targetId="matchStats"){
+    const el = document.getElementById(targetId);
+    if(el) el.innerHTML = matchStatsHTML();
+  }
+
+
   function finishBossRush(){
+    if(state.finished) return;
+
     const save = Store.saveData();
     const score = state.snakes[0]?.score || state.campaignTotal || 0;
+
     if(score > save.stats.bestBossRush) save.stats.bestBossRush = score;
+    UI.addXP(120, "Boss Rush concluído");
     save.stats.gamesPlayed += 1;
     save.stats.playSeconds += Math.floor(state.sessionSeconds || 0);
-    save.stats.playSeconds += Math.floor(state.sessionSeconds || 0);
+
+    UI.recordScore("bossrush", score, {coins:state.match.coinsEarned,time:state.sessionSeconds});
     Store.persist();
 
     state.running=false;
     state.finished=true;
     Sound.stopMusic();
-  
-  function startDailyChallenge(){
-    const ch = UI.currentDailyChallenge();
-
-    if(ch.type === "boss"){
-      start("bossrush");
-      return;
-    }
-
-    if(ch.type === "infinite"){
-      start("infinito");
-      return;
-    }
-
-    start("single");
-  }
-
-  UI.setBody("menu-aberto");
+    UI.setBody("menu-aberto");
 
     document.getElementById("gameOverTitulo").textContent = "⚔️ Boss Rush concluído!";
     document.getElementById("gameOverTexto").textContent = `Você derrotou todos os bosses com ${score} pontos.`;
@@ -583,6 +950,10 @@ const Game = (() => {
     document.getElementById("finalP2").textContent = "-";
     document.getElementById("finalTotal").textContent = score;
     document.getElementById("finalRecorde").textContent = save.recorde;
+    const tipEl=document.getElementById("gameTip"); if(tipEl) tipEl.textContent="Mandou muito! Tente fazer mais pontos no Boss Rush usando itens especiais.";
+
+    renderMatchStats("matchStats");
+
     document.getElementById("gameOver").style.display = "block";
 
     Sound.win();
@@ -591,21 +962,47 @@ const Game = (() => {
   }
 
   function completeLevel(){
-    state.running=false; Sound.stopMusic(); UI.setBody("menu-aberto"); const level=DATA.campaign[state.campaignIndex]; const next=DATA.campaign[state.campaignIndex+1]; UI.unlockLevel(state.campaignIndex+1);
-    document.getElementById("faseTexto").textContent=`Você concluiu ${level.nome} com ${state.snakes[0].score} ponto(s).`; document.getElementById("proximaFaseTexto").textContent = next ? next.nome : "Final da campanha";
-    if(next && !state.levelSelectMode){ document.getElementById("faseCompleta").style.display="block"; Sound.win(); createConfetti(); animateConfetti(); }
-    else if(next && state.levelSelectMode){ finish(false,true); }
+    state.running=false;
+    Sound.stopMusic();
+    UI.setBody("menu-aberto");
+
+    const level=DATA.campaign[state.campaignIndex];
+    const next=DATA.campaign[state.campaignIndex+1];
+
+    let stars = 1;
+    const score = state.snakes[0]?.score || state.campaignTotal || 0;
+    const meta = level.meta || score;
+
+    if(!state.match.died) stars = 2;
+    if(level.boss || score >= Math.ceil(meta * 1.35)) stars = 3;
+
+    UI.setLevelStars(state.campaignIndex, stars);
+    UI.unlockLevel(state.campaignIndex+1);
+    UI.addXP(25 + stars*15, "Fase concluída");
+
+    document.getElementById("faseTexto").textContent=`Você concluiu ${level.nome} com ${score} ponto(s) e ${stars} estrela(s).`;
+    document.getElementById("proximaFaseTexto").textContent = next ? next.nome : "Final da campanha";
+
+    if(next && !state.levelSelectMode){
+      document.getElementById("faseCompleta").style.display="block";
+      Sound.win();
+      createConfetti();
+      animateConfetti();
+    }
+    else if(next && state.levelSelectMode){
+      finish(false,true);
+    }
     else finishCampaign();
   }
 
   function nextCampaignLevel(){ state.campaignIndex++; document.getElementById("faseCompleta").style.display="none"; setupGame(); showLevelIntro(); }
 
   function finishCampaign(){
-    if(state.finished) return; const save=Store.saveData(); state.running=false; state.closing=false; state.finished=true; Sound.stopMusic(); UI.setBody("menu-aberto"); UI.unlockAchievement("zerouCampanha");
-    if(state.campaignTotal > save.recorde) save.recorde = state.campaignTotal; if(state.campaignTotal > save.stats.bestCampaign) save.stats.bestCampaign = state.campaignTotal; save.stats.gamesPlayed += 1; Store.persist();
+    if(state.finished) return; const save=Store.saveData(); state.running=false; state.closing=false; state.finished=true; Sound.stopMusic(); UI.setBody("menu-aberto"); UI.unlockAchievement("zerouCampanha"); UI.setLevelStars(state.campaignIndex,3); UI.addXP(150, "Campanha concluída");
+    if(state.campaignTotal > save.recorde) save.recorde = state.campaignTotal; if(state.campaignTotal > save.stats.bestCampaign) save.stats.bestCampaign = state.campaignTotal; save.stats.gamesPlayed += 1; save.stats.playSeconds += Math.floor(state.sessionSeconds || 0); UI.recordScore("campanha", state.campaignTotal, {coins:state.match.coinsEarned,time:state.sessionSeconds}); Store.persist();
     UI.refreshMoney(); UI.renderMissions(); UI.renderRanking();
     document.getElementById("vitoriaTexto").textContent = `Você derrotou o Abacatão e terminou a campanha com ${state.campaignTotal} ponto(s)!`;
-    document.getElementById("epicScore").textContent = state.campaignTotal; document.getElementById("epicCoins").textContent = Store.saveData().moedas; document.getElementById("epicBosses").textContent = Store.saveData().stats.bossKills; document.getElementById("epicRecord").textContent = save.recorde; document.getElementById("vitoriaEpica").style.display = "block";
+    document.getElementById("epicScore").textContent = state.campaignTotal; renderMatchStats("epicMatchStats"); document.getElementById("epicCoins").textContent = Store.saveData().moedas; document.getElementById("epicBosses").textContent = Store.saveData().stats.bossKills; document.getElementById("epicRecord").textContent = save.recorde; document.getElementById("vitoriaEpica").style.display = "block";
     Sound.win(); createConfetti(); animateConfetti();
   }
 
@@ -614,7 +1011,7 @@ const Game = (() => {
   }
 
   function createPowerUp(){
-    const types=["escudo","pimenta","magnet","slow","double"]; let n, attempts=0; do{ n={x:30+Math.random()*(W-60),y:30+Math.random()*(H-60),tipo:types[Math.floor(Math.random()*types.length)]}; attempts++; } while(occupied(n.x,n.y) && attempts<200); state.powerUp=n;
+    const types=["escudo","pimenta","magnet","slow","double","freeze","ghost","mini","heart","mega"]; let n, attempts=0; do{ n={x:30+Math.random()*(W-60),y:30+Math.random()*(H-60),tipo:types[Math.floor(Math.random()*types.length)]}; attempts++; } while(occupied(n.x,n.y) && attempts<200); state.powerUp=n;
   }
 
 
@@ -652,19 +1049,71 @@ const Game = (() => {
   }
 
   function createParticles(x,y,cor){ const amount = state.graphics==="alto" ? 22 : state.graphics==="baixo" ? 8 : 14; for(let i=0;i<amount;i++) state.particles.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,life:25,cor,size:2+Math.random()*2}); }
-  function eatEffect(x,y,gold,points){ const cor=gold?"#fde047":"#bef264"; createParticles(x,y,cor); createParticles(x,y,"#92400e"); state.waves.push({x,y,r:6,life:28,cor:gold?"rgba(250,204,21,.8)":"rgba(190,242,100,.8)"}); state.floatingTexts.push({x,y:y-8,texto:`+${points}`,cor:gold?"#fde047":"#dcfce7",life:45,vy:-1.2}); }
+  function eatEffect(x,y,gold,points,coins=1,doubleActive=false){ const cor=gold?"#fde047":"#bef264"; createParticles(x,y,cor); createParticles(x,y,"#92400e"); state.waves.push({x,y,r:6,life:28,cor:gold?"rgba(250,204,21,.8)":"rgba(190,242,100,.8)"}); state.floatingTexts.push({x,y:y-8,texto:`+${points} pts`,cor:gold?"#fde047":"#dcfce7",life:45,vy:-1.2}); state.floatingTexts.push({x,y:y+12,texto:`+${coins} 🪙${doubleActive?" 2X":""}`,cor:"#facc15",life:52,vy:-1.05}); }
   function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
 
   function sampleSnake(s, step){ const result=[]; if(!s.trail.length) return result; result.push({x:s.x,y:s.y}); let target=step, walked=0; for(let i=1;i<s.trail.length;i++){ const a=s.trail[i-1], b=s.trail[i], d=dist(a,b); if(d===0) continue; while(walked+d>=target){ const ratio=(target-walked)/d; result.push({x:a.x+(b.x-a.x)*ratio, y:a.y+(b.y-a.y)*ratio}); target += step; if(result.length>90) return result; } walked += d; if(walked>s.length) break; } return result; }
 
+
+  function drawBossHazards(){
+    (state.bossHazards || []).forEach(hz=>{
+      const pulse = Math.sin((hz.pulse || 0)/140) * 4;
+      ctx.fillStyle = hz.color || "rgba(239,68,68,.30)";
+      ctx.beginPath();
+      ctx.arc(hz.x,hz.y,hz.r+pulse,0,Math.PI*2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(254,240,138,.55)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(hz.x,hz.y,hz.r+6+pulse,0,Math.PI*2);
+      ctx.stroke();
+    });
+  }
+
+
   function drawAll(){
     const shakeX = state.cameraShake>0 ? (Math.random()-.5)*5 : 0; const shakeY = state.cameraShake>0 ? (Math.random()-.5)*5 : 0;
-    ctx.save(); ctx.translate(shakeX, shakeY); drawMap(); drawWeather(); drawWaves(); drawFood(); if(state.powerUp) drawPowerUp(); if(state.boss) drawBoss(); drawBossProjectiles(); state.snakes.forEach(s=>{ if(s.alive) drawSnake(s); }); drawParticles(); drawFloatingTexts(); drawConfetti(); drawPowerBadges(); ctx.restore();
+    ctx.save(); ctx.translate(shakeX, shakeY); drawMap(); drawWeather(); drawBossHazards(); drawWaves(); drawFood(); if(state.powerUp) drawPowerUp(); if(state.boss) drawBoss(); drawBossProjectiles(); state.snakes.forEach(s=>{ if(s.alive) drawSnake(s); }); drawParticles(); drawFloatingTexts(); drawConfetti(); drawPowerBadges(); ctx.restore();
   }
 
   function drawPowerBadges(){
-    let x=14, y=24; const badges=[]; if(state.effects.magnet>0) badges.push("🧲"); if(state.effects.slow>0) badges.push("⏳"); if(state.effects.doubleCoins>0) badges.push("💰");
-    badges.forEach(b=>{ ctx.fillStyle="rgba(0,0,0,.35)"; ctx.fillRect(x-8,y-18,30,30); ctx.font="20px Arial"; ctx.fillStyle="#fff"; ctx.fillText(b,x,y+4); x += 36; });
+    let x=14, y=24;
+    const badges=[];
+    if(state.effects.magnet>0) badges.push(["🧲",state.effects.magnet]);
+    if(state.effects.slow>0) badges.push(["⏳",state.effects.slow]);
+    if(state.effects.doubleCoins>0) badges.push(["💰",state.effects.doubleCoins]);
+    if(state.effects.freeze>0) badges.push(["❄️",state.effects.freeze]);
+    if(state.effects.ghost>0) badges.push(["👻",state.effects.ghost]);
+    if(state.effects.mini>0) badges.push(["🔹",state.effects.mini]);
+
+    badges.forEach(([icon,time])=>{
+      ctx.fillStyle="rgba(0,0,0,.42)";
+      roundRect(x-8,y-20,44,34,10,true,false);
+      ctx.font="18px Arial";
+      ctx.fillStyle="#fff";
+      ctx.textAlign="left";
+      ctx.fillText(icon,x,y+2);
+      ctx.font="bold 10px Arial";
+      ctx.fillStyle="#fde047";
+      ctx.fillText(`${Math.ceil(time/1000)}s`,x+19,y+3);
+      x += 50;
+    });
+  }
+
+  function roundRect(x,y,w,h,r,fill,stroke){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y);
+    ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);
+    ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);
+    ctx.quadraticCurveTo(x,y,x+r,y);
+    if(fill) ctx.fill();
+    if(stroke) ctx.stroke();
   }
 
 
@@ -768,7 +1217,10 @@ const Game = (() => {
 
   function drawSnake(s){
     const pts=sampleSnake(s,12); if(pts.length<2) return; const wavePts=pts.map((p,i)=>{ const next=pts[Math.min(i+1,pts.length-1)]; const angle=Math.atan2(next.y-p.y,next.x-p.x); const normal=angle+Math.PI/2; const wave=Math.sin(state.animTime/120+i*.7)*2.2; return {x:p.x+Math.cos(normal)*wave,y:p.y+Math.sin(normal)*wave}; });
-    ctx.lineCap="round"; ctx.lineJoin="round"; drawSpecialSkinGlow(s,wavePts); drawSmoothLine(wavePts,"rgba(0,0,0,.28)",38,4,7); drawSmoothLine(wavePts,s.cor2,32,0,0); const grad=ctx.createLinearGradient(0,0,W,H); grad.addColorStop(0,s.cor1); grad.addColorStop(.5,s.cor2); grad.addColorStop(1,s.cor1); drawSmoothLine(wavePts,grad,26,0,0); drawSmoothLine(wavePts,s.brilho,7,-5,-5); drawScaleMarks(s,wavePts); const tail=wavePts[wavePts.length-1]; ctx.fillStyle=s.cor2; ctx.beginPath(); ctx.arc(tail.x,tail.y,9,0,Math.PI*2); ctx.fill(); drawSnakeHead(s);
+    const ghostAlpha = state.effects.ghost>0 ? .58 : 1;
+    ctx.save();
+    ctx.globalAlpha = ghostAlpha;
+    ctx.lineCap="round"; ctx.lineJoin="round"; drawSpecialSkinGlow(s,wavePts); drawSmoothLine(wavePts,"rgba(0,0,0,.28)",38,4,7); drawSmoothLine(wavePts,s.cor2,32,0,0); const grad=ctx.createLinearGradient(0,0,W,H); grad.addColorStop(0,s.cor1); grad.addColorStop(.5,s.cor2); grad.addColorStop(1,s.cor1); drawSmoothLine(wavePts,grad,26,0,0); drawSmoothLine(wavePts,s.brilho,7,-5,-5); drawScaleMarks(s,wavePts); const tail=wavePts[wavePts.length-1]; ctx.fillStyle=s.cor2; ctx.beginPath(); ctx.arc(tail.x,tail.y,9,0,Math.PI*2); ctx.fill(); drawSnakeHead(s); ctx.restore();
   }
 
   function drawScaleMarks(s, pts){
@@ -793,7 +1245,7 @@ const Game = (() => {
       return;
     } ctx.save(); ctx.translate(f.x,f.y); ctx.scale(pulse,pulse); if(f.gold){ const glow=22+Math.sin(state.animTime/180)*3; ctx.fillStyle="rgba(250,204,21,.35)"; ctx.beginPath(); ctx.arc(0,0,glow,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#fde047"; ctx.beginPath(); ctx.arc(0,0,17,0,Math.PI*2); ctx.fill(); } ctx.fillStyle="rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(1,8,11,6,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#14532d"; ctx.beginPath(); ctx.ellipse(0,0,11,14,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#bef264"; ctx.beginPath(); ctx.ellipse(0,0,8,11,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#92400e"; ctx.beginPath(); ctx.arc(0,3,4,0,Math.PI*2); ctx.fill(); ctx.fillStyle="rgba(255,255,255,.45)"; ctx.beginPath(); ctx.arc(-4,-5,2.4,0,Math.PI*2); ctx.fill(); ctx.restore(); }
 
-  function drawPowerUp(){ const p=state.powerUp; const pulse=17+Math.sin(state.animTime/160)*3; ctx.fillStyle="rgba(255,255,255,.35)"; ctx.beginPath(); ctx.arc(p.x,p.y,pulse,0,Math.PI*2); ctx.fill(); const map={escudo:["#fef08a","🛡️"],pimenta:["#ef4444","🌶️"],magnet:["#60a5fa","🧲"],slow:["#c4b5fd","⏳"],double:["#fde047","💰"]}; ctx.fillStyle=map[p.tipo][0]; ctx.beginPath(); ctx.arc(p.x,p.y,12,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#052e16"; ctx.font="16px Arial"; ctx.textAlign="center"; ctx.fillText(map[p.tipo][1],p.x,p.y+6); }
+  function drawPowerUp(){ const p=state.powerUp; const pulse=17+Math.sin(state.animTime/160)*3; ctx.fillStyle="rgba(255,255,255,.35)"; ctx.beginPath(); ctx.arc(p.x,p.y,pulse,0,Math.PI*2); ctx.fill(); const map={escudo:["#fef08a","🛡️"],pimenta:["#ef4444","🌶️"],magnet:["#60a5fa","🧲"],slow:["#c4b5fd","⏳"],double:["#fde047","💰"],freeze:["#93c5fd","❄️"],ghost:["#e9d5ff","👻"],mini:["#bbf7d0","🔹"],heart:["#fca5a5","❤️"],mega:["#fde047","🥑"]}; ctx.fillStyle=map[p.tipo][0]; ctx.beginPath(); ctx.arc(p.x,p.y,12,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#052e16"; ctx.font="16px Arial"; ctx.textAlign="center"; ctx.fillText(map[p.tipo][1],p.x,p.y+6); }
 
   function drawBoss(){ const boss=state.boss; if(!boss) return; const blink=boss.inv>0 && Math.floor(state.animTime/90)%2===0; const shake=boss.angry>0 ? Math.sin(state.animTime/40)*3 : 0; ctx.save(); ctx.translate(boss.x+shake,boss.y); ctx.fillStyle="rgba(0,0,0,.25)"; ctx.beginPath(); ctx.ellipse(4,35,44,15,0,0,Math.PI*2); ctx.fill(); if(!blink){ const aura = boss.type==="tomate" ? "rgba(239,68,68,.28)" : boss.type==="pimenta" ? "rgba(249,115,22,.28)" : "rgba(132,204,22,.30)"; ctx.fillStyle=aura; ctx.beginPath(); ctx.arc(0,0,boss.r+12+Math.sin(state.animTime/120)*4,0,Math.PI*2); ctx.fill(); ctx.fillStyle=boss.color2; ctx.beginPath(); ctx.ellipse(0,0,boss.r*.82,boss.r,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle=boss.color1; ctx.beginPath(); ctx.ellipse(0,0,boss.r*.62,boss.r*.78,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#92400e"; ctx.beginPath(); ctx.arc(0,12,15,0,Math.PI*2); ctx.fill(); ctx.fillStyle="#020617"; ctx.beginPath(); ctx.arc(-13,-14,5,0,Math.PI*2); ctx.arc(13,-14,5,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="#020617"; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(-12,25); ctx.quadraticCurveTo(0,34,12,25); ctx.stroke(); } const hpW=100,hpPct=boss.hp/boss.maxHp; ctx.fillStyle="rgba(0,0,0,.45)"; ctx.fillRect(-hpW/2,-65,hpW,10); ctx.fillStyle=hpPct<.35?"#ef4444":hpPct<.66?"#f97316":"#facc15"; ctx.fillRect(-hpW/2,-65,hpW*hpPct,10); ctx.strokeStyle="#fef08a"; ctx.lineWidth=2; ctx.strokeRect(-hpW/2,-65,hpW,10); ctx.fillStyle="#fef08a"; ctx.font="bold 14px Arial"; ctx.textAlign="center"; ctx.fillText(`${boss.name} F${boss.phase}`,0,-72); ctx.restore(); }
   function drawBossProjectiles(){ state.bossProjectiles.forEach(pr=>{ ctx.fillStyle="rgba(0,0,0,.22)"; ctx.beginPath(); ctx.arc(pr.x+3,pr.y+4,pr.r,0,Math.PI*2); ctx.fill(); ctx.fillStyle=pr.color; ctx.beginPath(); ctx.arc(pr.x,pr.y,pr.r,0,Math.PI*2); ctx.fill(); }); }
@@ -819,18 +1271,37 @@ const Game = (() => {
 
   function updateHUD(){ document.getElementById("score1").textContent=state.snakes[0]?.score||0; document.getElementById("score2").textContent=state.snakes[1]?.score||0; document.getElementById("shield1").textContent=state.snakes[0]?.shield||0; document.getElementById("shield2").textContent=state.snakes[1]?.shield||0; if(state.mode==="multi") document.getElementById("meta").textContent=DATA.metaMulti; 
     else if(state.mode==="bossrush") document.getElementById("meta").textContent="BOSS RUSH";
+    else if(state.mode==="treino") document.getElementById("meta").textContent="TREINO";
+    else if(state.mode==="tutorialmap") document.getElementById("meta").textContent="TUTORIAL";
     else if(state.mode==="infinito") document.getElementById("meta").textContent="∞";
     else if(state.mode==="campanha") document.getElementById("meta").textContent=state.boss?"BOSS":DATA.campaign[state.campaignIndex].meta; 
     else document.getElementById("meta").textContent="-"; document.getElementById("faseHud").textContent=state.mode==="campanha"?`${state.campaignIndex+1}/${DATA.campaign.length}`:"-"; document.getElementById("bossHud").textContent=state.boss?`${state.boss.hp}/${state.boss.maxHp}`:"-"; document.getElementById("moedasHud").textContent=Store.saveData().moedas; }
 
+
+  function deathTip(reason){
+    const tips = {
+      "Borda do mapa":"Dica: faça curvas mais abertas perto da borda.",
+      "Obstáculo":"Dica: use o power-up fantasma para atravessar obstáculos por alguns segundos.",
+      "Corpo da cobra":"Dica: quando a cobra estiver grande, use mini cobra ou diminua a velocidade.",
+      "Fogo do Pimentão":"Dica: contra o Pimentão, fique longe das zonas laranjas no chão."
+    };
+
+    if(state.mode === "bossrush") return "Dica: guarde escudo e congelar para a fase final do boss.";
+    if(state.effects.doubleCoins>0) return "Dica: aproveite Moedas 2X com abacate dourado para farmar mais.";
+    return tips[reason] || "Dica: use escudo, ímã e fantasma para sobreviver mais.";
+  }
+
+
   function finish(meta, levelOnly=false){
     if(state.finished) return; const save=Store.saveData(); state.finished=true; state.running=false; state.closing=false; Sound.stopMusic(); UI.setBody("menu-aberto"); let title="💀 Game Over", text="", badge="Fim de jogo"; const p1=state.snakes[0]?.score||0, p2=state.snakes[1]?.score||0, total=p1+p2; save.stats.gamesPlayed += 1;
-    if(state.mode==="single" || state.mode==="campanha" || state.mode==="infinito" || state.mode==="bossrush"){
+    if(state.mode==="single" || state.mode==="campanha" || state.mode==="infinito" || state.mode==="bossrush" || state.mode==="treino" || state.mode==="tutorialmap"){
       if(p1>save.recorde) save.recorde=p1; if(state.mode==="single" && p1>save.stats.bestSingle) save.stats.bestSingle=p1; 
       if(state.mode==="infinito" && p1>save.stats.bestInfinite) save.stats.bestInfinite=p1;
       if(state.mode==="bossrush" && p1>save.stats.bestBossRush) save.stats.bestBossRush=p1;
       if(state.mode==="campanha" && p1>save.stats.bestCampaign) save.stats.bestCampaign=p1;
-      if(levelOnly){ title="✅ Fase concluída!"; text=`Você concluiu ${DATA.campaign[state.campaignIndex].nome} com ${p1} ponto(s).`; badge="Fase liberada"; }
+      if(state.mode==="treino"){ title="🎯 Treino encerrado"; text=`Você treinou e fez ${p1} ponto(s).`; badge="Treino livre"; }
+      else if(state.mode==="tutorialmap"){ title="🎓 Tutorial encerrado"; text=`Você praticou e fez ${p1} ponto(s).`; badge="Aprendizado"; }
+      else if(levelOnly){ title="✅ Fase concluída!"; text=`Você concluiu ${DATA.campaign[state.campaignIndex].nome} com ${p1} ponto(s).`; badge="Fase liberada"; }
       else if(p1>=save.recorde){ title="🏆 Novo recorde!"; text=`Você comeu ${p1} abacate(s)!`; badge="Mandou muito!"; Sound.win(); createConfetti(); }
       else { text=`Você comeu ${p1} abacate(s). Tente novamente!`; badge="Tente novamente"; }
     }
@@ -840,13 +1311,31 @@ const Game = (() => {
       else { title="🤝 Empate!"; text=`Os dois comeram ${p1}.`; badge="Empate"; }
       if(meta) text += " Vitória por meta!";
     }
-    Store.persist(); UI.refreshMoney(); UI.renderAchievements(); UI.renderMissions(); UI.renderRanking(); document.getElementById("gameOverTitulo").textContent=title; document.getElementById("gameOverTexto").textContent=text; document.getElementById("vencedorBadge").textContent=badge; document.getElementById("finalP1").textContent=p1; document.getElementById("finalP2").textContent=state.mode==="multi"?p2:"-"; document.getElementById("finalTotal").textContent=total; document.getElementById("finalRecorde").textContent=save.recorde; document.getElementById("gameOver").style.display="block"; animateConfetti();
+    if(state.mode !== "treino" && state.mode !== "tutorialmap") UI.addXP(Math.max(5, Math.round((state.mode==="multi" ? Math.max(p1,p2) : p1) * 3)), "Partida"); UI.recordScore(state.mode, state.mode==="multi" ? Math.max(p1,p2) : p1, {coins:state.match.coinsEarned,time:state.sessionSeconds}); Store.persist(); UI.refreshMoney(); UI.renderAchievements(); UI.renderMissions(); UI.renderRanking(); document.getElementById("gameOverTitulo").textContent=title; document.getElementById("gameOverTexto").textContent=text; document.getElementById("vencedorBadge").textContent=badge; document.getElementById("finalP1").textContent=p1; document.getElementById("finalP2").textContent=state.mode==="multi"?p2:"-"; document.getElementById("finalTotal").textContent=total; document.getElementById("finalRecorde").textContent=save.recorde; const tipEl=document.getElementById("gameTip"); if(tipEl) tipEl.textContent=deathTip(state.match.deathReason); renderMatchStats("matchStats"); document.getElementById("gameOver").style.display="block"; animateConfetti();
   }
 
   function togglePause(){ state.paused=!state.paused; document.getElementById("pausa").style.display = state.paused ? "block" : "none"; document.getElementById("somStatusPausa").textContent = Store.saveData().sound ? "Som ligado" : "Som desligado"; UI.setBody(state.paused ? "menu-aberto" : "jogando"); state.lastTime=performance.now(); }
   function toggleFullscreen(){ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
   function restart(){ if(state.mode==="campanha" && !state.levelSelectMode){ state.campaignIndex=0; state.campaignTotal=0; } setupGame(); showLevelIntro(); }
-  function backToMenu(){ state.running=false; state.paused=false; state.closing=false; state.finished=false; state.boss=null; state.bossProjectiles=[]; Sound.stopMusic(); UI.backToMenu(); }
+  function backToMenu(){ state.running=false; state.paused=false; state.closing=false; state.finished=false; state.boss=null; state.bossProjectiles=[]; state.bossHazards=[]; Sound.stopMusic(); UI.backToMenu(); }
+
+
+
+  function startWeeklyMission(){
+    const mission = UI.currentWeeklyMission();
+
+    if(mission.type === "boss"){
+      start("bossrush");
+      return;
+    }
+
+    if(mission.type === "infinite"){
+      start("infinito");
+      return;
+    }
+
+    start("single");
+  }
 
 
   function startDailyChallenge(){
@@ -866,5 +1355,5 @@ const Game = (() => {
   }
 
   UI.setBody("menu-aberto"); drawForest();
-  return {start,startLevel,startDailyChallenge,restart,backToMenu,togglePause,nextCampaignLevel};
+  return {start,startLevel,startDailyChallenge,startWeeklyMission,restart,backToMenu,togglePause,nextCampaignLevel};
 })();

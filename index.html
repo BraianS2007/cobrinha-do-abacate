@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#14532d" />
   <meta name="description" content="Coma abacates, desbloqueie skins, compre upgrades, derrote bosses e sobreviva no modo infinito." />
-  <meta name="application-name" content="Cobrinha do Abacate Ultimate" />
-  <meta property="og:title" content="Cobrinha do Abacate Ultimate" />
+  <meta name="application-name" content="Cobrinha do Abacate Ultimate 1.4.0" />
+  <meta property="og:title" content="Cobrinha do Abacate Ultimate 1.4.0" />
   <meta property="og:description" content="Jogo da cobrinha com abacates, skins, upgrades, Boss Rush, modo infinito e desafios diários." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="assets/banner.png" />
@@ -15,7 +15,7 @@
   <link rel="preload" href="assets/avocado.svg" as="image" />
   <link rel="preload" href="assets/tree.svg" as="image" />
 
-  <title>Cobrinha do Abacate Ultimate</title>
+  <title>Cobrinha do Abacate Ultimate 1.4.0</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -23,12 +23,12 @@
   <div id="preloader" class="preloader">
     <div class="preloader-card">
       <div class="preloader-logo">🥑</div>
-      <b>Cobrinha do Abacate Ultimate</b>
+      <b>Cobrinha do Abacate Ultimate 1.4.0</b>
       <small>Carregando assets do jogo...</small>
       <div class="preloader-bar"><span id="preloaderBar"></span></div>
     </div>
   </div>
-  <h1>🐍 Cobrinha do Abacate Ultimate 🥑</h1>
+  <h1>🐍 Cobrinha do Abacate Ultimate 1.4.0 🥑</h1>
 
   <div id="menu" class="tela">
     <div class="floaters"><span>🥑</span><span>🐍</span><span>🌿</span><span>⭐</span></div>
@@ -55,6 +55,15 @@
       <div class="hero-spark s3">⭐</div>
     </div>
 
+    <div class="profile-name-box">
+      <label>👤 Nome do jogador</label>
+      <div>
+        <input id="playerNameInput" maxlength="18" placeholder="Digite seu nome">
+        <button onclick="UI.savePlayerName()">Salvar</button>
+      </div>
+      <small>Esse nome aparece no perfil e no ranking local.</small>
+    </div>
+
     <div class="grid-cards">
       <div class="card">
         <div class="campo">
@@ -63,6 +72,7 @@
             <option value="105">Fácil</option>
             <option value="135" selected>Médio</option>
             <option value="170">Difícil</option>
+            <option value="205">Insano</option>
           </select>
         </div>
         <div class="campo">
@@ -106,12 +116,18 @@
     <div class="botoes-grid menu-clean">
       <button onclick="UI.openPlayMenu()">🎮 Jogar</button>
       <button onclick="UI.openStore()">🛒 Skins</button>
+      <button onclick="UI.openCharacterSelect()">🐍 Personagem</button>
       <button onclick="UI.openUpgradeStore()">⬆️ Upgrades</button>
       <button onclick="UI.openRanking()">📊 Ranking</button>
       <button onclick="UI.openProfile()">👤 Perfil</button>
       <button onclick="UI.openDailyChallenge()">📅 Desafio diário</button>
+      <button onclick="UI.openWeeklyMission()">🗓️ Missão semanal</button>
+      <button onclick="UI.openCodes()">🎁 Códigos</button>
       <button onclick="UI.openMissions()">🎯 Missões</button>
       <button onclick="UI.openSettings()">⚙️ Configurações</button>
+      <button onclick="UI.openVersionNews()">🆕 Novidades</button>
+      <button onclick="UI.openBugReport()">🐞 Reportar bug</button>
+      <button onclick="UI.promptInstall()">📲 Instalar jogo</button>
       <button onclick="UI.openHowToPlay()">📖 Como jogar</button>
       <button onclick="UI.openCredits()">⭐ Créditos</button>
     </div>
@@ -121,8 +137,68 @@
       &nbsp; | &nbsp; 🏆 Recorde: <b id="recorde">0</b>
       &nbsp; | &nbsp; 🥑 Total: <b id="totalAbacatesMenu">0</b>
     </div>
-    <div class="version-badge">Versão Public Release • pronta para postar</div>
+    <div class="version-badge">Versão 1.4.0 • Polimento Final</div>
     <div id="menuToast" class="toast"></div>
+  </div>
+
+
+  <div id="novidadesVersao" class="tela">
+    <h2>🆕 Novidades da versão 1.4.0</h2>
+    <p class="info">Essa atualização deixou o jogo mais estável e com cara de versão publicada.</p>
+
+    <div class="resultado-card news-list">
+      <p>✅ Power-ups corrigidos e mais visíveis</p>
+      <p>✅ Moedas 2X com tempo no HUD</p>
+      <p>✅ Upgrades atualizando corretamente</p>
+      <p>✅ Colisão da cobra reforçada</p>
+      <p>✅ Estatísticas da partida no fim do jogo</p>
+      <p>✅ Sistema de nickname</p>
+      <p>✅ Ranking local por jogador</p>
+      <p>✅ Tela de personagem com prévia grande</p>
+      <p>✅ Modo Treino e Tutorial Jogável</p>
+      <p>✅ Sistema de XP e níveis</p>
+      <p>✅ Estrelas nas fases da campanha</p>
+      <p>✅ Missão semanal</p>
+      <p>✅ Códigos promocionais</p>
+      <p>✅ Skins liberadas por conquista</p>
+      <p>✅ Tela inicial cinematográfica</p>
+      <p>✅ Game Over e Vitória melhorados</p>
+      <p>✅ Novos power-ups: fantasma, congelar, mini cobra, coração e mega abacate</p>
+      <p>✅ Itens especiais na loja</p>
+      <p>✅ Bosses com ataques mais inteligentes</p>
+      <p>✅ Dificuldade Insano</p>
+      <p>✅ Volume separado para música e efeitos</p>
+      <p>✅ Botão de instalação e tela para reportar bug</p>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.closeVersionNews()">Bora jogar!</button>
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
+  </div>
+
+  <div id="reportarBug" class="tela">
+    <h2>🐞 Reportar bug</h2>
+    <p class="info">
+      Encontrou algum bug? Mande um print e diga:
+      <br><br>
+      1. Qual modo estava jogando<br>
+      2. O que aconteceu<br>
+      3. Se foi no celular ou PC<br>
+      4. Qual power-up, boss ou mapa estava ativo
+    </p>
+
+    <div class="resultado-card">
+      <p class="info" id="bugInfoText">
+        Versão: 1.4.0<br>
+        Dica: copie essas informações e mande junto com o print.
+      </p>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.copyBugInfo()">Copiar informações</button>
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
   </div>
 
   <div id="modoJogo" class="tela">
@@ -166,6 +242,18 @@
         <span>⚔️</span>
         Boss Rush
         <small>Derrote Tomatão, Pimentão e Abacatão.</small>
+      </button>
+
+      <button onclick="Game.start('treino')">
+        <span>🎯</span>
+        Modo Treino
+        <small>Aprenda sem morrer.</small>
+      </button>
+
+      <button onclick="Game.start('tutorialmap')">
+        <span>🎓</span>
+        Tutorial Jogável
+        <small>Aprenda controles e power-ups dentro do mapa.</small>
       </button>
     </div>
 
@@ -216,9 +304,15 @@
     <div class="profile-card">
       <div class="profile-avatar">🐍</div>
       <div>
-        <b>Braian Player</b>
-        <small>Cobrinha do Abacate Ultimate</small>
+        <b id="perfilNome">Braian Player</b>
+        <small>Cobrinha do Abacate Ultimate 1.4.0</small>
       </div>
+    </div>
+
+    <div class="resultado-card level-profile">
+      <div class="badge-vencedor">Nível <b id="perfilNivel">1</b></div>
+      <p class="info">XP: <b id="perfilXP">0</b> / <b id="perfilNextXP">100</b></p>
+      <div class="progresso"><div id="perfilXPBar"></div></div>
     </div>
 
     <div id="perfilStats" class="stats-grid"></div>
@@ -253,16 +347,77 @@
     </div>
   </div>
 
+
+  <div id="personagem" class="tela">
+    <h2>🐍 Escolha sua cobra</h2>
+    <p class="info">Veja uma prévia grande, raridade, efeito e equipe no Player 1 ou Player 2.</p>
+
+    <div id="personagemPreview" class="character-preview"></div>
+    <div id="personagemGrid" class="skin-grid character-grid"></div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.backToMenu()">Voltar</button>
+      <button onclick="UI.openStore()">Ir para Loja</button>
+    </div>
+  </div>
+
+
+  <div id="missaoSemanal" class="tela">
+    <h2>🗓️ Missão Semanal</h2>
+    <p id="weeklyMissionText" class="info"></p>
+
+    <div class="resultado-card">
+      <div class="badge-vencedor">Recompensa: 🪙 <b id="weeklyMissionReward">0</b> + XP</div>
+      <div class="progresso"><div id="weeklyMissionProgress"></div></div>
+      <p class="info" id="weeklyMissionStatus"></p>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="Game.startWeeklyMission()">Jogar missão</button>
+      <button onclick="UI.claimWeeklyMissionReward()">Resgatar</button>
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
+  </div>
+
+  <div id="codigos" class="tela">
+    <h2>🎁 Códigos Promocionais</h2>
+    <p class="info">Digite códigos para ganhar moedas, XP ou liberar bônus.</p>
+
+    <div class="profile-name-box">
+      <label>Código</label>
+      <div>
+        <input id="promoCodeInput" maxlength="24" placeholder="Ex: ABACATE100">
+        <button onclick="UI.redeemCode()">Resgatar</button>
+      </div>
+      <small>Códigos disponíveis para teste: ABACATE100, XP50, BOSS, SKINREAL</small>
+    </div>
+
+    <div id="codigoResultado" class="toast"></div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
+  </div>
+
   <div id="ranking" class="tela">
     <h2>📊 Ranking Local</h2>
     <p class="info">Seus números ficam salvos neste navegador.</p>
     <div id="rankingCards" class="stats-grid"></div>
-    <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
+
+    <div class="resultado-card">
+      <h3>🏆 Melhores partidas por jogador</h3>
+      <div id="rankingLista" class="ranking-list"></div>
+    </div>
+
+    <div class="acoes-overlay">
+      <button onclick="UI.clearLocalRanking()">Limpar ranking local</button>
+      <button onclick="UI.backToMenu()">Voltar</button>
+    </div>
   </div>
 
   <div id="selecionarFase" class="tela">
     <h2>🗺️ Seleção de Fases</h2>
-    <p class="info">Conclua fases da campanha para liberar as próximas.</p>
+    <p class="info">Conclua fases, ganhe estrelas e libere as próximas.</p>
     <div id="listaFases" class="level-grid"></div>
     <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
   </div>
@@ -289,6 +444,11 @@
     </div>
 
     <div id="shopSpecialPanel" style="display:none">
+      <div class="resultado-card">
+        <p class="info">Compre itens de uso único e ative para a próxima partida.</p>
+      </div>
+      <div id="listaItensEspeciais"></div>
+
       <div class="upgrade-card">
         <span>🎁</span>
         <div style="flex:1">
@@ -338,6 +498,18 @@
     <p class="info">Ajuste o jogo e gerencie seu progresso salvo.</p>
     <div class="config-lista">
       <div class="config-item"><b>Som</b><p>Ligue ou desligue som e música.</p><button onclick="UI.toggleSoundSetting()">Alternar som</button></div>
+      <div class="config-item">
+        <b>Volume dos efeitos</b>
+        <p>Controla sons de comer, power-up, clique e boss.</p>
+        <input id="effectVolume" type="range" min="0" max="100" value="80" oninput="UI.setEffectVolume(this.value)">
+        <small><span id="effectVolumeLabel">80</span>%</small>
+      </div>
+      <div class="config-item">
+        <b>Volume da música</b>
+        <p>Controla apenas a música de fundo.</p>
+        <input id="musicVolume" type="range" min="0" max="100" value="55" oninput="UI.setMusicVolume(this.value)">
+        <small><span id="musicVolumeLabel">55</span>%</small>
+      </div>
       <div class="config-item"><b>Mostrar tutorial</b><p>Exibe novamente a tela de tutorial rápido.</p><button onclick="UI.showTutorialAgain()">Mostrar tutorial</button></div>
       <div class="config-item"><b>Resetar moedas</b><p>Zera apenas suas moedas.</p><button class="perigo" onclick="UI.resetCoins()">Resetar moedas</button></div>
       <div class="config-item"><b>Resetar ranking</b><p>Zera ranking, vitórias e recordes.</p><button class="perigo" onclick="UI.resetRanking()">Resetar ranking</button></div>
@@ -370,7 +542,7 @@
     <h2>⭐ Créditos</h2>
     <p class="info">
       Projeto criado por <b>Braian Sorato</b><br><br>
-      Cobrinha do Abacate Ultimate é um jogo HTML5 feito para navegador, com campanha, Boss Rush, modo infinito, skins, upgrades e desafios diários.<br><br>
+      Cobrinha do Abacate Ultimate 1.4.0 é um jogo HTML5 feito para navegador, com campanha, Boss Rush, modo infinito, skins, upgrades e desafios diários.<br><br>
       Controles: WASD, setas, toque, deslizar e joystick virtual.
     </p>
     <div class="acoes-overlay"><button onclick="UI.backToMenu()">Voltar</button></div>
@@ -426,6 +598,11 @@
 
   <div id="gameOver" class="tela">
     <h2 id="gameOverTitulo">Game Over</h2>
+    <div id="gameOverVisual" class="gameover-visual">
+      <div class="sad-snake">🐍</div>
+      <div id="gameTip" class="game-tip">Dica: use escudo e ímã para sobreviver mais.</div>
+    </div>
+
     <div class="resultado-card">
       <div id="vencedorBadge" class="badge-vencedor">Resultado</div>
       <p id="gameOverTexto" class="info"></p>
@@ -435,6 +612,7 @@
         <div class="stat">Total <b id="finalTotal">0</b></div>
         <div class="stat">Recorde <b id="finalRecorde">0</b></div>
       </div>
+      <div id="matchStats" class="match-stats"></div>
     </div>
     <div class="acoes-overlay">
       <button onclick="Game.restart()">🔁 Tentar novamente</button>
@@ -443,6 +621,7 @@
   </div>
 
   <div id="vitoriaEpica" class="tela">
+    <div id="epicCelebration" class="epic-celebration">🏆🥑✨</div>
     <h2>👑 Vitória Épica!</h2>
     <p id="vitoriaTexto" class="info"></p>
     <div class="resultado-card">
@@ -453,6 +632,7 @@
         <div class="stat">Bosses <b id="epicBosses">0</b></div>
         <div class="stat">Recorde <b id="epicRecord">0</b></div>
       </div>
+      <div id="epicMatchStats" class="match-stats"></div>
     </div>
     <div class="acoes-overlay">
       <button onclick="Game.restart()">🔁 Jogar novamente</button>

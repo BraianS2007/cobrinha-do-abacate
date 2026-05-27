@@ -1,17 +1,17 @@
 const DATA = {
   metaMulti: 10,
-  storageKey: "cobrinhaAbacateLegendsV1",
+  storageKey: "cobrinhaAbacatePremiumRealistaV2",
   skins: {
-    verde:{nome:"Jiboia Verde",cor1:"#65a30d",cor2:"#365314",brilho:"#d9f99d",preco:0,raridade:"comum",efeito:"Natural"},
-    azul:{nome:"Cobra Azul",cor1:"#38bdf8",cor2:"#0f766e",brilho:"#cffafe",preco:0,raridade:"comum",efeito:"Fria"},
-    coral:{nome:"Coral",cor1:"#ef4444",cor2:"#111827",brilho:"#fca5a5",preco:25,raridade:"rara",efeito:"Listras fortes"},
-    areia:{nome:"Cobra da Areia",cor1:"#d6b06e",cor2:"#8b5e34",brilho:"#f6e7c3",preco:25,raridade:"rara",efeito:"Pele seca"},
-    pantano:{nome:"Víbora do Pântano",cor1:"#6b8e23",cor2:"#2f4f2f",brilho:"#cfe58f",preco:35,raridade:"rara",efeito:"Manchas escuras"},
-    branca:{nome:"Serpente do Gelo",cor1:"#e2f7ff",cor2:"#8ac8e2",brilho:"#ffffff",preco:50,raridade:"epica",efeito:"Cristais"},
-    fogo:{nome:"Serpente de Lava",cor1:"#fb923c",cor2:"#991b1b",brilho:"#fde68a",preco:60,raridade:"epica",efeito:"Faíscas"},
-    neon:{nome:"Víbora Neon",cor1:"#22d3ee",cor2:"#7c3aed",brilho:"#f0abfc",preco:70,raridade:"epica",efeito:"Brilho neon"},
-    ouro:{nome:"Anaconda Dourada",cor1:"#fde047",cor2:"#a16207",brilho:"#fff7b3",preco:100,raridade:"lendaria",efeito:"Aura dourada"},
-    abacate:{nome:"Rei Abacate",cor1:"#84cc16",cor2:"#14532d",brilho:"#fef3c7",preco:120,raridade:"lendaria",efeito:"Folhas"}
+    verde:{nome:"Jiboia Esmeralda",cor1:"#65a30d",cor2:"#365314",brilho:"#d9f99d",preco:0,raridade:"comum",efeito:"Escamas naturais"},
+    azul:{nome:"Naja Oceânica",cor1:"#38bdf8",cor2:"#0f766e",brilho:"#cffafe",preco:0,raridade:"comum",efeito:"Aura aquática"},
+    coral:{nome:"Coral Real",cor1:"#ef4444",cor2:"#111827",brilho:"#fca5a5",preco:25,raridade:"rara",efeito:"Faixas reais"},
+    areia:{nome:"Víbora do Cânion",cor1:"#d6b06e",cor2:"#8b5e34",brilho:"#f6e7c3",preco:25,raridade:"rara",efeito:"Camuflagem do deserto"},
+    pantano:{nome:"Víbora do Brejo",cor1:"#6b8e23",cor2:"#2f4f2f",brilho:"#cfe58f",preco:35,raridade:"rara",efeito:"Limo e musgo"},
+    branca:{nome:"Serpente Glacial",cor1:"#e2f7ff",cor2:"#8ac8e2",brilho:"#ffffff",preco:50,raridade:"epica",efeito:"Brilho gelado"},
+    fogo:{nome:"Serpente Ígnea",cor1:"#fb923c",cor2:"#991b1b",brilho:"#fde68a",preco:60,raridade:"epica",efeito:"Fogo vivo"},
+    neon:{nome:"Mamba Elétrica",cor1:"#22d3ee",cor2:"#7c3aed",brilho:"#f0abfc",preco:70,raridade:"epica",efeito:"Energia pulsante"},
+    ouro:{nome:"Anaconda Solar",cor1:"#fde047",cor2:"#a16207",brilho:"#fff7b3",preco:100,raridade:"lendaria",efeito:"Reflexos metálicos"},
+    abacate:{nome:"Guardião Abacate",cor1:"#84cc16",cor2:"#14532d",brilho:"#fef3c7",preco:120,raridade:"lendaria",efeito:"Casca viva"}
   },
   upgrades: {
     coinMult:{nome:"Moeda Extra",desc:"+25% moedas por abacate.",icon:"💰",max:4,baseCost:35},
@@ -47,5 +47,12 @@ const DATA = {
     {nome:"Pimentão",mapa:"vulcao",meta:0,decoracoes:30,speedBonus:24,boss:"pimenta",icon:"🌶️"},
     {nome:"Vulcão Final",mapa:"vulcao",meta:22,decoracoes:38,speedBonus:28,boss:null,icon:"🌋"},
     {nome:"Abacatão",mapa:"floresta",meta:0,decoracoes:30,speedBonus:20,boss:"abacate",icon:"👑"}
-  ]
+  ],
+  specialItems:{
+    escudoInicial:{nome:"Escudo Inicial",desc:"Começa a próxima partida com escudo.",preco:35,icon:"🛡️"},
+    imaInicial:{nome:"Ímã Inicial",desc:"Começa a próxima partida com ímã por alguns segundos.",preco:45,icon:"🧲"},
+    moedasDobro:{nome:"Moedas 2X Inicial",desc:"Começa a próxima partida com moedas 2X.",preco:55,icon:"💰"},
+    revive:{nome:"Reviver Extra",desc:"Ganha uma vida extra na próxima partida.",preco:70,icon:"❤️"},
+    limpaMapa:{nome:"Mapa Limpo",desc:"Remove parte dos obstáculos no início da próxima partida.",preco:60,icon:"🧹"}
+  }
 };
