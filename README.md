@@ -30,26 +30,6 @@ Jogo HTML5 da cobrinha com tema de abacate, feito para rodar direto no navegador
 - Pausar: `P`
 - Tela cheia: `F`
 
-## 🚀 Como rodar localmente
-
-Abra o arquivo `index.html` no navegador.
-
-Para testar como site:
-
-```bash
-python -m http.server 8000
-```
-
-Depois abra:
-
-```text
-http://localhost:8000
-```
-
-## 🌐 Como publicar
-
-Use GitHub Pages, Netlify ou Vercel. Veja o arquivo `DEPLOY.md`.
-
 ## 👤 Criador
 
 Criado por **Braian Sorato**.
